@@ -1,0 +1,233 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* fuente de botones */
+@font-face {
+  font-family: 'Botones'; 
+  src: url('../../public/assets/Louis\ George\ Cafe.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* cuerpo de la pagina */
+body {
+  background-color:#000000;
+  color:#ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* encabezado de logo y nombre */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 10vh;
+  padding: 0 2rem;
+  border-bottom: 1px solid whitesmoke;
+}
+
+/* contiene logo y nombre */
+.barraSuperior {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* logo de la pagina */
+#logotipo {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+#logotipo:hover {
+  filter: drop-shadow(0 0 15px rgba(8, 116, 205, 0.8));
+  transform: scale(1.10);
+}
+
+/* Nombre pagina */
+.nombrePagina {
+  font-size: 1.25rem;
+  font-weight: 600;
+  justify-content: center;
+}
+
+/* contiene el panel con los botones, eslogan y los formularios */
+#contenedorPanel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  background: 
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), /* Capa oscura para que resalte el texto */
+    url('/assets/fondo.gif') no-repeat center center / cover;
+}
+
+/* panel que contiene los dos formularios*/
+.panelFormularios {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* formulario de inicio de sesión o registro */
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 50vw;
+  margin: 0 auto;
+  justify-content: center;
+  align-items: center;
+}
+
+
+/* entradas de campo de formularios */
+.camposFormulario {
+  border-radius: 40px;
+  border: 2px solid #ffffff;
+  width: 50vw;
+  height: 40px;
+  margin: 10px;
+  padding-left: 10px;
+  background-color: #191919;
+  outline: none;
+  font-family: 'Botones';
+  font-size: larger;
+  color: #ffffff;
+}
+
+.camposFormulario:hover {
+  background-color:#ffffff;
+  color: #000000;
+}
+
+.camposFormulario::placeholder {
+  color:#ffffff;
+}
+
+.camposFormulario:hover::placeholder {
+  color: #000000;
+}
+
+/* eslogan */
+.eslogan {
+  padding-bottom: 0;
+  margin-bottom: 2rem;;
+}
+
+/* Contiene el contenedor de panel*/
+.panelPrincipal {
+  width: 100%;
+  height: 90vh;
+  padding: 0;
+  display: flex;
+}
+
+/* estilo aplicado a elementos que se ocultan */
+.oculto {
+  display: none !important;
+}
+
+.panelError {
+  display: flex;
+  width: 70vw;
+  height: 60px;
+  background-color: #e5e1e1;
+  position: absolute;
+  top: 14vh;              
+  justify-content: flex-start;
+  align-items: center;    
+  border-radius: 15px;
+}
+
+#mensajeError {
+  color: #000000;
+  font-family: 'Botones';
+  margin-left: 20px;
+}
+
+/* contiene los botones de inicio de sesión y registro*/
+.botonesOpciones {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 50px;
+}
+
+.logoAlerta {
+  object-fit: contain;
+  width: 50px;
+  height: 50px;
+  margin-left: 20px;
+}
+/* botones */
+.boton {
+  width: 300px;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid white;
+  border-radius: 30px;
+  font-family: 'Botones';
+  font-weight: 500;
+  font-size: larger;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.boton:hover {
+  background-color: white;
+  color: black;
+}
+
+/* campo e icono de ocultar o ver contraseña*/
+.campoPassword {
+  position: relative;
+  width: 50vw;
+  margin: 10px auto;
+  display: flex;
+  align-items: center;
+}
+
+.campoPassword input {
+  width: 100%;
+  margin: 0;
+  padding-right: 40px;
+}
+
+.botonOjo{
+  position: absolute;
+  right: 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ffffff;
+  outline: none;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.campoPassword:hover .botonOjo{
+  color: #000000;
+}
+
+.campoPassword:hover input{
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.campoPassword:hover input::placeholder{
+  color: #000000;
+}

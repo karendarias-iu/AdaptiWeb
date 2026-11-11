@@ -3,9 +3,8 @@ use adaptiweb;
 create table Usuarios(
 	id_usuario INT auto_increment primary key,
 	nombre VARCHAR(100) not null,
-	apellido VARCHAR(100) not null,
 	correo VARCHAR(100) unique not null,
-	contraseña VARCHAR(100) unique not null,
+	contraseña VARCHAR(100) not null,
 	condicion VARCHAR(100) not null
 );
 
