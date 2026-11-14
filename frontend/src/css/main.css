@@ -7,7 +7,7 @@
 /* fuente de botones */
 @font-face {
   font-family: 'Botones'; 
-  src: url('../../public/assets/Louis\ George\ Cafe.ttf') format('truetype');
+  src: url('/assets/Louis\ George\ Cafe.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
@@ -57,6 +57,7 @@ body {
   font-size: 1.25rem;
   font-weight: 600;
   justify-content: center;
+  font-family: 'Botones';
 }
 
 /* contiene el panel con los botones, eslogan y los formularios */
@@ -230,4 +231,35 @@ body {
 
 .campoPassword:hover input::placeholder{
   color: #000000;
+}
+
+/* link recuperar contraseña*/
+.linkRecuperar {
+  color: #ffffff;
+  font-family: 'Botones';
+  transition: color 0.3s ease;
+}
+
+.linkRecuperar:hover {
+  color: azure;
+}
+
+.linkRecuperar::after{
+  color: #ffffff;
+}
+
+.parrafo{
+  align-self: flex-start;
+  text-align: left;
+}
+
+.formularioRecuperacion, .mensajeEnvioRecuperacion{
+  display: contents;
+}
+
+.mensajeEnvioRecuperacion p{
+  align-self: flex-start; 
+  text-align: left;
+  width: 100%;            
+  margin: 2px 0;
 }

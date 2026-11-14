@@ -39,8 +39,17 @@
         <form id="form-login" class="formulario oculto">
           <h2>Iniciar Sesión</h2>
           <input type="email" placeholder="Correo electrónico" required class="camposFormulario">
-          <input type="password" placeholder="Contraseña" required class="camposFormulario">
+          <div class="campoPassword">
+            <input type="password" placeholder="Contraseña" class="camposFormulario password">
+            <button type="button" id="ver-ocultarPassword" class="botonOjo">
+                <svg id="iconoOjo" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+            </button>
+          </div>
           <button type="submit" class="boton">Ingresar</button>
+          <a href="#" class="linkRecuperar">¿Olvidaste tu contraseña?</a>
         </form>
 
         <!-- Formulario Registro -->
@@ -49,7 +58,7 @@
           <input type="text" placeholder="Nombre" class="camposFormulario">
           <input type="email" placeholder="Correo electrónico" class="camposFormulario">
           <div class="campoPassword">
-            <input type="password" placeholder="Contraseña" class="camposFormulario" id="password">
+            <input type="password" placeholder="Contraseña" class="camposFormulario password">
             <button type="button" id="ver-ocultarPassword" class="botonOjo">
                 <svg id="iconoOjo" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
@@ -59,6 +68,23 @@
           </div>
           <button type="submit" class="boton">Crear cuenta</button>
         </form>
+        <!-- Formulario Recuperar contraseña-->
+         <form id="form-reset" class="formulario oculto">
+            <div class="formularioRecuperacion">
+              <h2>Recuperar contraseña</h2>
+              <br>
+              <p class="parrafo">Ingrese su correo electrónico para enviar el enlace</p>
+              <input type="email" placeholder="Correo electrónico" class="camposFormulario">
+              <button type="submit" class="boton">Enviar código de recuperacion</button>
+            </div>
+            <div class="mensajeEnvioRecuperacion oculto">
+                <h2>¡El enlace ha sido enviado!</h2>
+                <br>
+                <p>Hemos enviado a tu correo electrónico las instrucciones para restablecer tu contraseña.</p>
+                <p>El enlace expirará en <strong>15 minutos</strong>. Si no lo ves en tu bandeja principal, revisa la carpeta de <strong>Spam</strong> o correo no deseado.</p>
+                <button type="button" id="botonSalirRecuperacion" class="boton">Volver al inicio</button>     
+            </div>
+         </form>
       </div>
     </section>
 

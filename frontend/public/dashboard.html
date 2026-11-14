@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AdaptiWeb</title>
+  <link rel="stylesheet" href="../src/css/dashboard.css">
+</head>
+<body>
+
+  <!-- Encabezado, contiene logo y nombre -->
+  <header class="header">
+    <div class="barraSuperior">
+      <img src="assets/AdaptiWeb_logo.png" alt="AdaptiWeb Logo" class="logotipo">
+      <span class="textoLogo">AdaptiWeb</span>
+    </div>
+    <button id="menu-btn" class="icon-btn" aria-label="Abrir menú">☰</button>
+  </header>
+
+  <!-- Menu desplegable -->
+  <aside id="sidebar" class="sidebar hidden">
+    <nav class="sidebar-nav">
+      <a href="#" id="nav-temp" class="opcionMenu">Lista de tareas</a>
+      <a href="#" id="nav-timer" class="opcionMenu">Temporizador</a>
+      <a href="#" id="nav-settings" class="opcionMenu">Configuración</a>
+      <a href="#" id="nav-logout" class="opcionMenu">Cerrar sesión</a>
+    </nav>
+  </aside>
+
+  <main class="main-container">
+
+    <!-- VISTA 2: DASHBOARD PRINCIPAL ("¿Qué harás hoy?") -->
+    <section id="view-dashboard" class="view-section">
+      <h1 class="dashboard-title">¿Qué harás hoy?</h1>
+      
+      <div class="panels-grid">
+        <!-- Panel 1: URL Proxy Extractor -->
+        <div class="card-panel">
+          <label>Ingresar URL de sitio o PDF</label>
+          <div class="search-box">
+            <input type="url" placeholder="Ingresar URL..." class="input-search">
+            <button class="send-btn" aria-label="Enviar URL">➤</button>
+          </div>
+        </div>
+
+        <!-- Panel 2: Inserción de texto manual -->
+        <div class="card-panel">
+          <label>Ingresar o pegar texto directo</label>
+          <textarea placeholder="Ingresar o pegar texto..." class="text-area-input"></textarea>
+          <button class="btn btn-light full-width">Abrir visor</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="../src/js/dashboard.js"></script>
+</body>
+</html>

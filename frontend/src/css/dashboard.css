@@ -1,0 +1,213 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+/* fuente de botones */
+@font-face {
+  font-family: 'Botones'; 
+  src: url('/assets/Louis\ George\ Cafe.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+/*Contiene todo el panel*/
+body {
+  background-color: black;
+  color: white;
+  font-family: 'Botones';
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Panel que tiene logo y nombre */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid white;
+  height: 10vh;
+}
+
+.barraSuperior {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logotipo {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.logotipo:hover{
+  filter: drop-shadow(0 0 15px rgba(8, 116, 205, 0.8));
+  transform: scale(1.10);
+}
+
+.textoLogo {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.opcionMenu{
+  display: block;
+  width: 100%;
+  background-color: black;
+  color: white;
+  font-size: large;
+  transition: filter 0.3s ease, transform 0.3s ease;
+  border-radius: 5px;
+  padding: 12px 2rem;
+  text-decoration: none;
+  border-bottom: 1px solid white;
+}
+
+.opcionMenu:hover{
+  background-color: white;
+  color: black;
+}
+
+/* CONTENEDOR DE VISTAS Y CLASE OCULTA */
+.main-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* DASHBOARD & PANELES GRID */
+.dashboard-title {
+  font-size: 3rem;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.panels-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  width: 100%;
+  max-width: 900px;
+}
+
+.card-panel {
+  border: 1px solid white;
+  border-radius: 20px;
+  padding: 2rem;
+  background-color: black;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* INPUTS Y BÚSQUEDA */
+.search-box {
+  display: flex;
+  align-items: center;
+  border: 1px solid white;
+  border-radius: 30px;
+  padding: 0.5rem 1rem;
+}
+
+.input-search {
+  background: transparent;
+  border: none;
+  color: white;
+  flex: 1;
+  padding: 0.5rem;
+  outline: none;
+}
+
+.send-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.text-area-input {
+  background: transparent;
+  border: 1px solid #333333;
+  border-radius: 10px;
+  color: white;
+  padding: 1rem;
+  height: 120px;
+  resize: none;
+  outline: none;
+}
+
+/* BOTONES GENERALES */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: white;
+  color: black;
+  border: 1px solid white;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+}
+
+.btn-light {
+  background-color: white;
+  color: black;
+  border: none;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* MENÚ LATERAL (SIDEBAR) */
+.sidebar {
+  position: fixed;
+  top: 10vh;
+  right: 0;
+  width: 300px;
+  height: fit-content;
+  box-sizing: border-box;
+  background-color: black;
+  border-left: 1px solid white;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  border-bottom: 2px solid white;
+}
+
+.close-btn {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+}
