@@ -14,6 +14,8 @@ const pool = require('./db');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const preferenciasRoutes = require('./src/routes/preferenciasRoutes');
+const { obtenerPreferenciasUsuario } = require('./src/controllers/preferenciasController');
 
 //lee el archivo (.env) y carga las variables privadas de la base de datos
 require('dotenv').config();
@@ -42,6 +44,9 @@ app.use(express.static(path.join(__dirname, '../frontend/public')));
 
 //pone en servicio la carpeta src para acceder a la hoja de estilos (css) y a lo correspondiente de js
 app.use('/src', express.static(path.join(__dirname, '../frontend/src')));
+
+//Preferencias de accesibilidad (GET para consultar, PUT para guardar). Requieren token de sesión
+app.use('/api/preferencias', preferenciasRoutes);
 
 //Registro de usuarios
 //define la ruta de tipo POST, esta recibe los datos del formulario
@@ -208,6 +213,14 @@ app.post('/api/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    // Recupera las preferencias guardadas del usuario (si falla, el frontend las pide después)
+    let preferencias = null;
+    try {
+      preferencias = await obtenerPreferenciasUsuario(usuario.id_usuario);
+    } catch (errorPreferencias) {
+      console.error('No se pudieron cargar las preferencias en el login:', errorPreferencias);
+    }
+
     return res.status(200).json({
       message: 'Inicio de sesión exitoso',
       token,
@@ -215,7 +228,8 @@ app.post('/api/login', async (req, res) => {
         id: usuario.id_usuario,
         nombre: usuario.nombre,
         correo: usuario.correo
-      }
+      },
+      preferencias
     });
   } catch (error) {
     console.error('Error en /api/login:', error);

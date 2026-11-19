@@ -1,0 +1,113 @@
+/* Pantalla de preferencias. Usa las variables de color de dashboard.css (--bg, --fg, ...) */
+
+.enlace-volver {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.contenedor-preferencias {
+  align-items: flex-start;
+}
+
+.panel-preferencias {
+  width: 100%;
+  max-width: 700px;
+}
+
+.titulo-preferencias {
+  font-size: 2rem;
+  font-weight: 500;
+}
+
+.descripcion-preferencias {
+  opacity: 0.85;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.4rem;
+}
+
+.campo label,
+.etiqueta-vista-previa {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.campo input,
+.campo select {
+  background-color: var(--bg);
+  color: var(--fg);
+  border: 2px solid var(--fg);
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  font-size: 1.05rem;
+  font-family: inherit;
+  width: 100%;
+}
+
+.campo input[aria-invalid="true"] {
+  border-color: var(--error);
+}
+
+/* Foco bien visible para quien navega con teclado */
+.campo input:focus-visible,
+.campo select:focus-visible,
+.btn:focus-visible {
+  outline: 3px solid var(--fg);
+  outline-offset: 3px;
+}
+
+.ayuda {
+  opacity: 0.75;
+}
+
+.mensaje-error {
+  color: var(--error);
+  font-weight: 600;
+  min-height: 1.1em;
+}
+
+/* La vista previa tiene su propio contraste, independiente del resto de la página */
+.vista-previa {
+  border: 2px solid var(--fg);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.vista-previa[data-contraste="claro"] {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.ultima-modificacion {
+  margin-bottom: 0.5rem;
+}
+
+.mensaje-estado {
+  min-height: 1.4em;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+}
+
+.mensaje-estado.error {
+  color: var(--error);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .header {
+    padding: 1rem;
+  }
+  .titulo-preferencias {
+    font-size: 1.5rem;
+  }
+}

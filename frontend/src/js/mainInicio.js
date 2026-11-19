@@ -284,6 +284,12 @@ document.addEventListener('DOMContentLoaded', () => {
         //Guarda el token y los datos básicos del usuario en localStorage
         localStorage.setItem('adaptiweb_token', data.token);
         localStorage.setItem('adaptiweb_usuario', JSON.stringify(data.usuario));
+        //Guarda las preferencias de accesibilidad recuperadas de la base de datos (o limpia las de otra cuenta)
+        if (data.preferencias) {
+          localStorage.setItem('adaptiweb_preferencias', JSON.stringify(data.preferencias));
+        } else {
+          localStorage.removeItem('adaptiweb_preferencias');
+        }
         //Redirige el usuario al panel principal
         window.location.href = 'dashboard.html';
       } else {

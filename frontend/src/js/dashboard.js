@@ -27,6 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const textareaTexto = document.querySelector('.text-area-input');
   const btnAbrirVisor = document.querySelector('.btn.btn-light');
 
+  // Sincroniza las preferencias guardadas en la BD (contraste, fuente, etc.) con este navegador
+  window.AdaptiPrefs?.cargarDesdeServidor(token).catch(() => {
+    // Si falla, se queda con las preferencias guardadas en este navegador
+  });
+
   // 3. Personalizar título con el nombre del usuario
   if (dashboardTitle && usuario.nombre) {
     dashboardTitle.textContent = `¿Qué harás hoy, ${usuario.nombre}?`;
@@ -55,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     localStorage.removeItem('adaptiweb_token');
     localStorage.removeItem('adaptiweb_usuario');
+    window.AdaptiPrefs?.borrarCache(); // para que otra persona en este navegador no vea tus preferencias
     window.location.href = 'Inicio.html';
   });
 

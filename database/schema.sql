@@ -10,12 +10,12 @@ create table Usuarios(
 
 create table Preferencias(
 	id_preferencia INT auto_increment primary key,
-	id_usuario INT,
+	id_usuario INT not null unique,
 	fuente VARCHAR(100),
 	tamanio_fuente DECIMAL(10,2),
 	interlineado DECIMAL(10,2),
-	espacio_letras VARCHAR(100),
-	espacio_palabras VARCHAR(100),
+	espacio_letras DECIMAL(10,2),
+	espacio_palabras DECIMAL(10,2),
 	contraste VARCHAR(100),
 	fecha_actualizacion DATETIME,
 	foreign key (id_usuario) references Usuarios(id_usuario)

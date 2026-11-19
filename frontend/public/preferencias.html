@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preferencias - AdaptiWeb</title>
+  <!-- tema.js va en el head y sin defer: aplica el contraste guardado antes de pintar la página -->
+  <script src="../src/js/tema.js"></script>
+  <link rel="stylesheet" href="../src/css/textoAdaptado.css">
+  <link rel="stylesheet" href="../src/css/dashboard.css">
+  <link rel="stylesheet" href="../src/css/preferencias.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="barraSuperior">
+      <img src="assets/AdaptiWeb_logo.png" alt="AdaptiWeb Logo" class="logotipo">
+      <span class="textoLogo">AdaptiWeb</span>
+    </div>
+    <a href="dashboard.html" class="btn btn-outline enlace-volver">← Volver</a>
+  </header>
+
+  <main class="main-container contenedor-preferencias">
+    <section class="card-panel panel-preferencias" aria-labelledby="titulo-preferencias">
+      <h1 id="titulo-preferencias" class="titulo-preferencias">Preferencias de lectura</h1>
+      <p class="descripcion-preferencias">
+        Elige cómo quieres ver los textos que analices. Los cambios se aplican y se guardan al pulsar «Guardar».
+      </p>
+
+      <form id="form-preferencias" novalidate>
+
+        <div class="campo">
+          <label for="fuente">Fuente</label>
+          <select id="fuente" name="fuente"></select>
+        </div>
+
+        <div class="campo">
+          <label for="tamanio_fuente">Tamaño de fuente (px)</label>
+          <input type="text" id="tamanio_fuente" name="tamanio_fuente" inputmode="decimal" autocomplete="off"
+                 aria-describedby="ayuda-tamanio_fuente error-tamanio_fuente">
+          <small id="ayuda-tamanio_fuente" class="ayuda">Número entre 8 y 120. Ejemplo: 18</small>
+          <span id="error-tamanio_fuente" class="mensaje-error" role="alert"></span>
+        </div>
+
+        <div class="campo">
+          <label for="interlineado">Interlineado (veces el tamaño de la letra)</label>
+          <input type="text" id="interlineado" name="interlineado" inputmode="decimal" autocomplete="off"
+                 aria-describedby="ayuda-interlineado error-interlineado">
+          <small id="ayuda-interlineado" class="ayuda">Número entre 1 y 5. Ejemplo: 1.5</small>
+          <span id="error-interlineado" class="mensaje-error" role="alert"></span>
+        </div>
+
+        <div class="campo">
+          <label for="espacio_letras">Espacio entre letras (px)</label>
+          <input type="text" id="espacio_letras" name="espacio_letras" inputmode="decimal" autocomplete="off"
+                 aria-describedby="ayuda-espacio_letras error-espacio_letras">
+          <small id="ayuda-espacio_letras" class="ayuda">Número entre 0 y 20. Ejemplo: 1.5</small>
+          <span id="error-espacio_letras" class="mensaje-error" role="alert"></span>
+        </div>
+
+        <div class="campo">
+          <label for="espacio_palabras">Espacio entre palabras (px)</label>
+          <input type="text" id="espacio_palabras" name="espacio_palabras" inputmode="decimal" autocomplete="off"
+                 aria-describedby="ayuda-espacio_palabras error-espacio_palabras">
+          <small id="ayuda-espacio_palabras" class="ayuda">Número entre 0 y 50. Ejemplo: 4</small>
+          <span id="error-espacio_palabras" class="mensaje-error" role="alert"></span>
+        </div>
+
+        <div class="campo">
+          <label for="contraste">Contraste</label>
+          <select id="contraste" name="contraste">
+            <option value="oscuro">Oscuro (fondo negro, texto blanco)</option>
+            <option value="claro">Claro (fondo blanco, texto negro)</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <span class="etiqueta-vista-previa" id="etiqueta-vista-previa">Vista previa</span>
+          <div id="vista-previa" class="vista-previa texto-adaptado" data-contraste="oscuro"
+               role="region" aria-labelledby="etiqueta-vista-previa">
+            La web que se adapta a usted, no al revés. Así se verán los textos que analices con las
+            preferencias que has escrito.
+          </div>
+        </div>
+
+        <p id="ultima-modificacion" class="ultima-modificacion"></p>
+        <p id="mensaje-estado" class="mensaje-estado" role="status" aria-live="polite"></p>
+
+        <button type="submit" id="boton-guardar" class="btn btn-light full-width">Guardar</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="../src/js/preferenciasPantalla.js"></script>
+</body>
+</html>

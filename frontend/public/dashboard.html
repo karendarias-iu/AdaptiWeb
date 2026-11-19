@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AdaptiWeb</title>
+  <!-- tema.js va en el head y sin defer: aplica el contraste guardado antes de pintar la página -->
+  <script src="../src/js/tema.js"></script>
+  <link rel="stylesheet" href="../src/css/textoAdaptado.css">
   <link rel="stylesheet" href="../src/css/dashboard.css">
 </head>
 <body>
@@ -22,6 +25,7 @@
     <nav class="sidebar-nav">
       <a href="#" id="nav-temp" class="opcionMenu">Lista de tareas</a>
       <a href="#" id="nav-timer" class="opcionMenu">Temporizador</a>
+      <a href="preferencias.html" id="nav-prefs" class="opcionMenu">Preferencias</a>
       <a href="#" id="nav-settings" class="opcionMenu">Configuración</a>
       <a href="#" id="nav-logout" class="opcionMenu">Cerrar sesión</a>
     </nav>
