@@ -96,8 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Abrir Configuración');
   });
 
-  // 7. Panel 1: Enviar URL de sitio o PDF
-  function procesarUrl() {
+  // 7. Panel 1: Enviar URL de sitio o PDF al backend para extraer texto limpio
+  async function procesarUrl() {
     const url = inputUrl?.value.trim();
 
     if (!url) {
@@ -109,19 +109,53 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       new URL(url); // Valida formato http:// o https://
     } catch {
-      alert('La URL debe incluir http:// o https://');
+      alert('La URL ingresada no es válida. Debe incluir http:// o https://');
       inputUrl?.focus();
       return;
     }
 
-    // Guarda el contenido a adaptar para que el visor lo lea
-    sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
-      tipo: 'url',
-      valor: url
-    }));
+    if (btnEnviarUrl) btnEnviarUrl.disabled = true;
+    if (inputUrl) inputUrl.disabled = true;
 
-    // Redirige a tu página del visor (ajusta el nombre si tu archivo se llama distinto)
-    window.location.href = 'visor.html';
+    try {
+      const respuesta = await fetch('/api/texto/procesar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ tipo: 'url', valor: url })
+      });
+
+      const datos = await respuesta.json();
+
+      if (respuesta.status === 401) {
+        localStorage.removeItem('adaptiweb_token');
+        localStorage.removeItem('adaptiweb_usuario');
+        window.location.href = 'Inicio.html';
+        return;
+      }
+
+      if (!respuesta.ok) {
+        alert(datos.message || 'No se pudo extraer el texto de la URL ingresada.');
+        inputUrl?.focus();
+        return;
+      }
+
+      // Guarda el string extraído para que visor.html lo muestre con las preferencias del usuario
+      sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
+        tipo: 'url',
+        valor: datos.texto || ''
+      }));
+
+      window.location.href = 'visor.html';
+    } catch (error) {
+      console.error('Error al extraer texto de la URL:', error);
+      alert('Error de conexión con el servidor al intentar leer la URL. Inténtalo de nuevo.');
+    } finally {
+      if (btnEnviarUrl) btnEnviarUrl.disabled = false;
+      if (inputUrl) inputUrl.disabled = false;
+    }
   }
 
   btnEnviarUrl?.addEventListener('click', procesarUrl);
@@ -134,14 +168,46 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 8. Panel 2: Abrir visor con texto manual (permite abrir incluso si no hay texto)
-  btnAbrirVisor?.addEventListener('click', () => {
+  btnAbrirVisor?.addEventListener('click', async () => {
     const texto = textareaTexto ? textareaTexto.value : '';
 
-    sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
-      tipo: 'texto',
-      valor: texto
-    }));
+    if (btnAbrirVisor) btnAbrirVisor.disabled = true;
 
-    window.location.href = 'visor.html';
+    try {
+      const respuesta = await fetch('/api/texto/procesar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ tipo: 'texto', valor: texto })
+      });
+
+      const datos = await respuesta.json();
+
+      if (respuesta.status === 401) {
+        localStorage.removeItem('adaptiweb_token');
+        localStorage.removeItem('adaptiweb_usuario');
+        window.location.href = 'Inicio.html';
+        return;
+      }
+
+      const textoFinal = respuesta.ok && typeof datos.texto === 'string' ? datos.texto : texto;
+
+      sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
+        tipo: 'texto',
+        valor: textoFinal
+      }));
+
+      window.location.href = 'visor.html';
+    } catch {
+      sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
+        tipo: 'texto',
+        valor: texto
+      }));
+      window.location.href = 'visor.html';
+    } finally {
+      if (btnAbrirVisor) btnAbrirVisor.disabled = false;
+    }
   });
 });

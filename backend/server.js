@@ -15,6 +15,7 @@ const path = require('path');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const preferenciasRoutes = require('./src/routes/preferenciasRoutes');
+const textoRoutes = require('./src/routes/textoRoutes');
 const { obtenerPreferenciasUsuario } = require('./src/controllers/preferenciasController');
 
 //lee el archivo (.env) y carga las variables privadas de la base de datos
@@ -47,6 +48,9 @@ app.use('/src', express.static(path.join(__dirname, '../frontend/src')));
 
 //Preferencias de accesibilidad (GET para consultar, PUT para guardar). Requieren token de sesión
 app.use('/api/preferencias', preferenciasRoutes);
+
+//Procesamiento de texto directo y extracción limpia desde URL externa
+app.use('/api/texto', textoRoutes);
 
 //Registro de usuarios
 //define la ruta de tipo POST, esta recibe los datos del formulario
