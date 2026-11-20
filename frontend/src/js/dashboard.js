@@ -32,6 +32,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Si falla, se queda con las preferencias guardadas en este navegador
   });
 
+  // Restaurar el texto previo en el textarea si el usuario regresó del visor
+  try {
+    const contenidoPrevio = JSON.parse(sessionStorage.getItem('adaptiweb_contenido') || 'null');
+    if (contenidoPrevio && contenidoPrevio.tipo === 'texto' && textareaTexto && !textareaTexto.value) {
+      textareaTexto.value = contenidoPrevio.valor || '';
+    }
+  } catch {
+    // Ignorar errores de parseo
+  }
+
   // 3. Personalizar título con el nombre del usuario
   if (dashboardTitle && usuario.nombre) {
     dashboardTitle.textContent = `¿Qué harás hoy, ${usuario.nombre}?`;
@@ -123,15 +133,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 8. Panel 2: Abrir visor con texto manual
+  // 8. Panel 2: Abrir visor con texto manual (permite abrir incluso si no hay texto)
   btnAbrirVisor?.addEventListener('click', () => {
-    const texto = textareaTexto?.value.trim();
-
-    if (!texto) {
-      alert('Por favor ingresa o pega un texto antes de abrir el visor.');
-      textareaTexto?.focus();
-      return;
-    }
+    const texto = textareaTexto ? textareaTexto.value : '';
 
     sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
       tipo: 'texto',

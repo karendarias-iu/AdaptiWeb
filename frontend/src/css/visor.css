@@ -1,0 +1,91 @@
+/* ===== TEMAS (contraste heredado de tema.js) ===== */
+:root {
+  --bg: #000000;
+  --fg: #ffffff;
+  --borde-suave: #333333;
+}
+
+:root[data-tema="claro"] {
+  --bg: #ffffff;
+  --fg: #000000;
+  --borde-suave: #cccccc;
+}
+
+@font-face {
+  font-family: 'Botones';
+  src: url('/assets/Louis\ George\ Cafe.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+/* Botón salir fijo en la esquina superior izquierda */
+.btn-salir {
+  position: fixed;
+  top: 1.25rem;
+  left: 1.25rem;
+  z-index: 10;
+  padding: 0.6rem 1.25rem;
+  border-radius: 30px;
+  border: 1px solid var(--fg);
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: 'Botones', sans-serif;
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-salir:hover,
+.btn-salir:focus-visible {
+  background-color: var(--fg);
+  color: var(--bg);
+}
+
+/* Contenedor principal que centra el cuadro */
+.visor-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+/* Cuadro de lectura:
+   - Centrado y cubre 2/3 del ancho de la página (66.6667%)
+   - Se extiende por todo el largo de la pantalla y crece según la longitud del texto
+   - Texto en la parte superior y alineado a la izquierda */
+.cuadro-lectura {
+  width: 66.6667%;
+  min-height: 100vh;
+  padding: 4.5rem 2.5rem 3rem 2.5rem;
+  border-left: 1px solid var(--borde-suave);
+  border-right: 1px solid var(--borde-suave);
+  background-color: var(--bg);
+  color: var(--fg);
+  text-align: left;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Adaptación responsiva para pantallas medianas/pequeñas sin alterar computadora */
+@media (max-width: 768px) {
+  .cuadro-lectura {
+    width: 92%;
+    padding: 4.5rem 1.25rem 2rem 1.25rem;
+  }
+}

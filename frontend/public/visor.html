@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visor de Lectura - AdaptiWeb</title>
+  <!-- tema.js aplica inmediatamente las preferencias guardadas o los valores predeterminados -->
+  <script src="../src/js/tema.js"></script>
+  <link rel="stylesheet" href="../src/css/textoAdaptado.css">
+  <link rel="stylesheet" href="../src/css/visor.css">
+</head>
+<body>
+
+  <!-- Botón de salir en la parte superior izquierda -->
+  <a href="dashboard.html" id="btn-salir" class="btn-salir" aria-label="Salir y volver a la pantalla principal">
+    ← Salir
+  </a>
+
+  <!-- Único cuadro centrado que cubre 2/3 del ancho y se extiende por todo el largo -->
+  <main class="visor-wrapper">
+    <article id="cuadro-lectura" class="cuadro-lectura texto-adaptado" aria-label="Área de lectura"></article>
+  </main>
+
+  <script src="../src/js/visor.js"></script>
+</body>
+</html>
