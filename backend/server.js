@@ -240,7 +240,18 @@ app.post('/api/login', async (req, res) => {
     return res.status(500).json({ message: 'Error interno del servidor.' });
   }
 });
+const {
+  verificarToken,
+  listarTareas,
+  crearTarea,
+  alternarCompletada,
+  eliminarTarea
+} = require('./src/controllers/taskController');
 
+app.get('/api/tareas', verificarToken, listarTareas);
+app.post('/api/tareas', verificarToken, crearTarea);
+app.patch('/api/tareas/:id/completar', verificarToken, alternarCompletada);
+app.delete('/api/tareas/:id', verificarToken, eliminarTarea);
 //inicializa el servidor, esta atenta de las peticiones en el puerto definido
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
 

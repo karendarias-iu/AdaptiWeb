@@ -1,0 +1,91 @@
+/* Estilos de la pantalla de temporizador Pomodoro */
+.enlace-volver {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.contenedor-temporizador {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Posicionado en la parte central de la pantalla, ligeramente hacia arriba y hacia la izquierda */
+.pomodoro-bloque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-3.5vw, -4vh);
+}
+
+.estado-ciclo {
+  font-size: 1.15rem;
+  margin-bottom: 1rem;
+  letter-spacing: 0.03em;
+  opacity: 0.9;
+}
+
+.cuadro-temporizador {
+  border: 2px solid var(--fg);
+  border-radius: 24px;
+  background-color: var(--bg);
+  color: var(--fg);
+  padding: 2.75rem 4.5rem;
+  min-width: 340px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.cuadro-temporizador.alerta-cambio {
+  box-shadow: 0 0 24px var(--fg);
+}
+
+.tiempo-display {
+  font-size: 5rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.acciones-temporizador {
+  margin-top: 1.75rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.acciones-temporizador .btn {
+  min-width: 120px;
+  font-family: 'Botones', sans-serif;
+  font-size: 1rem;
+}
+
+.acciones-temporizador .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .pomodoro-bloque {
+    transform: translate(0, -2vh);
+  }
+
+  .cuadro-temporizador {
+    min-width: 280px;
+    padding: 2rem 2.5rem;
+  }
+
+  .tiempo-display {
+    font-size: 3.75rem;
+  }
+
+  .acciones-temporizador {
+    flex-wrap: wrap;
+  }
+}

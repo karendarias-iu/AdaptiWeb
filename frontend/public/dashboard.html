@@ -14,67 +14,21 @@
   <!-- Encabezado, contiene logo y nombre -->
   <header class="header">
     <div class="barraSuperior">
-      <img src="assets/AdaptiWeb_logo.png" alt="AdaptiWeb Logo" class="logotipo">
+      <a href="Inicio.html" aria-label="Ir a la pantalla de inicio de sesión"><img src="assets/AdaptiWeb_logo.png" alt="AdaptiWeb Logo" class="logotipo"></a>
       <span class="textoLogo">AdaptiWeb</span>
     </div>
     <button id="menu-btn" class="icon-btn" aria-label="Abrir menú" aria-expanded="false" aria-controls="sidebar">☰</button>
   </header>
 
-  <!-- Panel lateral desplegable: contenedor de las herramientas (se navega entre ellas sin recargar la página).
-       Cada opción tiene --i (su posición): el CSS lo usa para que aparezcan una a una. -->
-  <aside id="sidebar" class="sidebar" aria-label="Panel de herramientas" inert>
-
-    <!-- Vista principal: el menú -->
-    <nav id="vista-menu" class="sidebar-vista" aria-label="Herramientas">
-      <button type="button" class="opcionMenu" style="--i:0" data-vista="tareas">Lista de tareas</button>
-      <button type="button" class="opcionMenu" style="--i:1" data-vista="temporizador">Temporizador</button>
-      <button type="button" class="opcionMenu" style="--i:2" data-vista="marcadores">Marcadores</button>
-      <button type="button" class="opcionMenu" style="--i:3" data-vista="configuracion">Configuración</button>
-      <a href="preferencias.html" id="nav-prefs" class="opcionMenu" style="--i:4">Preferencias</a>
-      <button type="button" id="nav-logout" class="opcionMenu" style="--i:5">Cerrar sesión</button>
+  <!-- Menu desplegable -->
+  <aside id="sidebar" class="sidebar" aria-label="Menú principal">
+    <nav id="vista-menu" class="sidebar-vista sidebar-nav">
+      <a href="#" id="nav-tasks" class="opcionMenu" style="--i:0">Lista de tareas</a>
+      <a href="temporizador.html" id="nav-timer" class="opcionMenu" style="--i:1">Temporizador</a>
+      <a href="preferencias.html" id="nav-prefs" class="opcionMenu" style="--i:2">Preferencias</a>
+      <a href="#" id="nav-settings" class="opcionMenu" style="--i:3">Configuración</a>
+      <a href="#" id="nav-logout" class="opcionMenu" style="--i:4">Cerrar sesión</a>
     </nav>
-
-    <!-- Vistas de cada herramienta. Cada una tiene un contenedor (#contenido-...) donde se monta su funcionalidad. -->
-    <section id="vista-tareas" class="sidebar-vista" aria-labelledby="titulo-tareas" hidden>
-      <div class="vista-cabecera">
-        <button type="button" class="btn-volver" data-volver aria-label="Volver al menú">←</button>
-        <h2 id="titulo-tareas" class="vista-titulo">Lista de tareas</h2>
-      </div>
-      <div id="contenido-tareas" class="vista-contenido">
-        <p class="vista-vacia">Aquí irá tu lista de tareas.</p>
-      </div>
-    </section>
-
-    <section id="vista-temporizador" class="sidebar-vista" aria-labelledby="titulo-temporizador" hidden>
-      <div class="vista-cabecera">
-        <button type="button" class="btn-volver" data-volver aria-label="Volver al menú">←</button>
-        <h2 id="titulo-temporizador" class="vista-titulo">Temporizador</h2>
-      </div>
-      <div id="contenido-temporizador" class="vista-contenido">
-        <p class="vista-vacia">Aquí irá el temporizador.</p>
-      </div>
-    </section>
-
-    <section id="vista-marcadores" class="sidebar-vista" aria-labelledby="titulo-marcadores" hidden>
-      <div class="vista-cabecera">
-        <button type="button" class="btn-volver" data-volver aria-label="Volver al menú">←</button>
-        <h2 id="titulo-marcadores" class="vista-titulo">Marcadores</h2>
-      </div>
-      <div id="contenido-marcadores" class="vista-contenido">
-        <p class="vista-vacia">Aquí irán tus marcadores.</p>
-      </div>
-    </section>
-
-    <section id="vista-configuracion" class="sidebar-vista" aria-labelledby="titulo-configuracion" hidden>
-      <div class="vista-cabecera">
-        <button type="button" class="btn-volver" data-volver aria-label="Volver al menú">←</button>
-        <h2 id="titulo-configuracion" class="vista-titulo">Configuración</h2>
-      </div>
-      <div id="contenido-configuracion" class="vista-contenido">
-        <p class="vista-vacia">Aquí irá la configuración.</p>
-      </div>
-    </section>
-
   </aside>
 
   <main class="main-container">

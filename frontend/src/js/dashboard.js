@@ -15,7 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const menuBtn = document.getElementById('menu-btn');
   const sidebar = document.getElementById('sidebar');
 
-  // Cerrar sesión (opción del menú lateral)
+  // Enlaces del menú lateral
+  const navTasks = document.getElementById('nav-tasks');
+  const navTimer = document.getElementById('nav-timer');
+  const navSettings = document.getElementById('nav-settings');
   const navLogout = document.getElementById('nav-logout');
 
   // Controles de los paneles principales
@@ -29,84 +32,44 @@ document.addEventListener('DOMContentLoaded', () => {
     // Si falla, se queda con las preferencias guardadas en este navegador
   });
 
+  // Restaurar el texto previo en el textarea si el usuario regresó del visor
+  try {
+    const contenidoPrevio = JSON.parse(sessionStorage.getItem('adaptiweb_contenido') || 'null');
+    if (contenidoPrevio && contenidoPrevio.tipo === 'texto' && textareaTexto && !textareaTexto.value) {
+      textareaTexto.value = contenidoPrevio.valor || '';
+    }
+  } catch {
+    // Ignorar errores de parseo
+  }
+
   // 3. Personalizar título con el nombre del usuario
   if (dashboardTitle && usuario.nombre) {
     dashboardTitle.textContent = `¿Qué harás hoy, ${usuario.nombre}?`;
   }
 
-  // 4. Panel lateral desplegable
-  // Las herramientas (tareas, temporizador, marcadores, configuración) viven dentro del panel:
-  // se cambia de una a otra mostrando/ocultando vistas, sin recargar la página.
-  const vistasPanel = sidebar ? sidebar.querySelectorAll('.sidebar-vista') : [];
-  let panelAbierto = false;
-  let ultimaOpcion = null; // opción del menú que abrió la herramienta actual (para devolver el foco)
-
-  function mostrarVista(nombre) {
-    const destino = document.getElementById(`vista-${nombre}`);
-    if (!destino) return;
-    vistasPanel.forEach((vista) => { vista.hidden = vista !== destino; });
-    sidebar.dataset.vista = nombre;
-    // Para que cada herramienta pueda iniciarse cuando se abre (ej. timer.js)
-    document.dispatchEvent(new CustomEvent('adaptipanel:vista', { detail: { vista: nombre } }));
-  }
-
-  function abrirPanel() {
-    if (!sidebar || panelAbierto) return;
-    panelAbierto = true;
-    mostrarVista('menu'); // siempre se abre en el menú
-    sidebar.inert = false;
-    sidebar.classList.add('abierto');
-    menuBtn.setAttribute('aria-expanded', 'true');
-    menuBtn.setAttribute('aria-label', 'Cerrar menú');
-    menuBtn.textContent = '✕';
-    sidebar.querySelector('#vista-menu .opcionMenu')?.focus({ preventScroll: true });
-  }
-
-  function cerrarPanel() {
-    if (!sidebar || !panelAbierto) return;
-    panelAbierto = false;
-    if (sidebar.contains(document.activeElement)) menuBtn.focus({ preventScroll: true });
-    sidebar.classList.remove('abierto');
-    sidebar.inert = true;
-    menuBtn.setAttribute('aria-expanded', 'false');
-    menuBtn.setAttribute('aria-label', 'Abrir menú');
-    menuBtn.textContent = '☰';
+  // 4. Abrir / cerrar menú lateral desplegable
+  // El CSS del panel usa la clase "abierto" (no "hidden"): sin ella el panel queda fuera de pantalla
+  function ajustarMenu(abrir) {
+    sidebar.classList.toggle('abierto', abrir);
+    menuBtn?.setAttribute('aria-expanded', String(abrir));
   }
 
   menuBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
-    panelAbierto ? cerrarPanel() : abrirPanel();
+    ajustarMenu(!sidebar.classList.contains('abierto'));
   });
 
-  // Dentro del panel: abrir una herramienta o volver al menú
-  sidebar?.addEventListener('click', (e) => {
-    const opcion = e.target.closest('[data-vista]');
-    if (opcion) {
-      ultimaOpcion = opcion;
-      mostrarVista(opcion.dataset.vista);
-      sidebar.querySelector('.sidebar-vista:not([hidden]) .btn-volver')?.focus({ preventScroll: true });
-      return;
-    }
-    if (e.target.closest('[data-volver]')) {
-      mostrarVista('menu');
-      (ultimaOpcion || sidebar.querySelector('#vista-menu .opcionMenu'))?.focus({ preventScroll: true });
-    }
-  });
-
-  // Cerrar al hacer clic fuera del panel
+  // Cerrar el sidebar si se hace clic fuera de él
   document.addEventListener('click', (e) => {
-    if (panelAbierto && !sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
-      cerrarPanel();
+    if (
+      sidebar &&
+      sidebar.classList.contains('abierto') &&
+      !sidebar.contains(e.target) &&
+      e.target !== menuBtn
+    ) {
+      ajustarMenu(false);
     }
   });
-
-  // Cerrar con Escape
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && panelAbierto) cerrarPanel();
-  });
-
-  // Por si otro script necesita controlar el panel
-  window.AdaptiPanel = { abrir: abrirPanel, cerrar: cerrarPanel, mostrarVista };
 
   // 5. Cerrar sesión
   navLogout?.addEventListener('click', (e) => {
@@ -117,8 +80,27 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.href = 'Inicio.html';
   });
 
-  // 7. Panel 1: Enviar URL de sitio o PDF
-  function procesarUrl() {
+  // 6. Navegación del menú lateral
+  navTasks?.addEventListener('click', (e) => {
+    e.preventDefault();
+    ajustarMenu(false);
+    console.log('Abrir Lista de tareas');
+  });
+
+  navTimer?.addEventListener('click', (e) => {
+    e.preventDefault();
+    ajustarMenu(false);
+    window.location.href = 'temporizador.html';
+  });
+
+  navSettings?.addEventListener('click', (e) => {
+    e.preventDefault();
+    ajustarMenu(false);
+    console.log('Abrir Configuración');
+  });
+
+  // 7. Panel 1: Enviar URL de sitio o PDF al backend para extraer texto limpio
+  async function procesarUrl() {
     const url = inputUrl?.value.trim();
 
     if (!url) {
@@ -130,19 +112,53 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       new URL(url); // Valida formato http:// o https://
     } catch {
-      alert('La URL debe incluir http:// o https://');
+      alert('La URL ingresada no es válida. Debe incluir http:// o https://');
       inputUrl?.focus();
       return;
     }
 
-    // Guarda el contenido a adaptar para que el visor lo lea
-    sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
-      tipo: 'url',
-      valor: url
-    }));
+    if (btnEnviarUrl) btnEnviarUrl.disabled = true;
+    if (inputUrl) inputUrl.disabled = true;
 
-    // Redirige a tu página del visor (ajusta el nombre si tu archivo se llama distinto)
-    window.location.href = 'visor.html';
+    try {
+      const respuesta = await fetch('/api/texto/procesar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ tipo: 'url', valor: url })
+      });
+
+      const datos = await respuesta.json();
+
+      if (respuesta.status === 401) {
+        localStorage.removeItem('adaptiweb_token');
+        localStorage.removeItem('adaptiweb_usuario');
+        window.location.href = 'Inicio.html';
+        return;
+      }
+
+      if (!respuesta.ok) {
+        alert(datos.message || 'No se pudo extraer el texto de la URL ingresada.');
+        inputUrl?.focus();
+        return;
+      }
+
+      // Guarda el string extraído para que visor.html lo muestre con las preferencias del usuario
+      sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
+        tipo: 'url',
+        valor: datos.texto || ''
+      }));
+
+      window.location.href = 'visor.html';
+    } catch (error) {
+      console.error('Error al extraer texto de la URL:', error);
+      alert('Error de conexión con el servidor al intentar leer la URL. Inténtalo de nuevo.');
+    } finally {
+      if (btnEnviarUrl) btnEnviarUrl.disabled = false;
+      if (inputUrl) inputUrl.disabled = false;
+    }
   }
 
   btnEnviarUrl?.addEventListener('click', procesarUrl);
@@ -154,21 +170,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 8. Panel 2: Abrir visor con texto manual
-  btnAbrirVisor?.addEventListener('click', () => {
-    const texto = textareaTexto?.value.trim();
+  // 8. Panel 2: Abrir visor con texto manual (permite abrir incluso si no hay texto)
+  btnAbrirVisor?.addEventListener('click', async () => {
+    const texto = textareaTexto ? textareaTexto.value : '';
 
-    if (!texto) {
-      alert('Por favor ingresa o pega un texto antes de abrir el visor.');
-      textareaTexto?.focus();
-      return;
+    if (btnAbrirVisor) btnAbrirVisor.disabled = true;
+
+    try {
+      const respuesta = await fetch('/api/texto/procesar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ tipo: 'texto', valor: texto })
+      });
+
+      const datos = await respuesta.json();
+
+      if (respuesta.status === 401) {
+        localStorage.removeItem('adaptiweb_token');
+        localStorage.removeItem('adaptiweb_usuario');
+        window.location.href = 'Inicio.html';
+        return;
+      }
+
+      const textoFinal = respuesta.ok && typeof datos.texto === 'string' ? datos.texto : texto;
+
+      sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
+        tipo: 'texto',
+        valor: textoFinal
+      }));
+
+      window.location.href = 'visor.html';
+    } catch {
+      sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
+        tipo: 'texto',
+        valor: texto
+      }));
+      window.location.href = 'visor.html';
+    } finally {
+      if (btnAbrirVisor) btnAbrirVisor.disabled = false;
     }
-
-    sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
-      tipo: 'texto',
-      valor: texto
-    }));
-
-    window.location.href = 'visor.html';
   });
 });

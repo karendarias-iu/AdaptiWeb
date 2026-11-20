@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Temporizador Pomodoro - AdaptiWeb</title>
+  <!-- tema.js va en el head y sin defer: aplica el contraste guardado antes de pintar la página -->
+  <script src="../src/js/tema.js"></script>
+  <link rel="stylesheet" href="../src/css/dashboard.css">
+  <link rel="stylesheet" href="../src/css/temporizador.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="barraSuperior">
+      <a href="Inicio.html" aria-label="Ir a la pantalla de inicio de sesión"><img src="assets/AdaptiWeb_logo.png" alt="AdaptiWeb Logo" class="logotipo"></a>
+      <span class="textoLogo">AdaptiWeb</span>
+    </div>
+    <a href="dashboard.html" class="btn btn-outline enlace-volver">← Volver</a>
+  </header>
+
+  <main class="main-container contenedor-temporizador">
+    <section class="pomodoro-bloque" aria-label="Temporizador Pomodoro">
+      <p id="estado-ciclo" class="estado-ciclo" role="status" aria-live="polite">Listo para iniciar</p>
+
+      <!-- Cuadro del temporizador -->
+      <div class="cuadro-temporizador" id="cuadro-temporizador">
+        <span id="tiempo-display" class="tiempo-display" aria-live="off">00:00</span>
+      </div>
+
+      <!-- 3 botones de acción centrados debajo del cuadro del temporizador -->
+      <div class="acciones-temporizador">
+        <button type="button" id="btn-iniciar" class="btn btn-light">Iniciar</button>
+        <button type="button" id="btn-pausar" class="btn btn-outline" disabled>Pausar</button>
+        <button type="button" id="btn-reiniciar" class="btn btn-outline">Reiniciar</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="../src/js/timer.js"></script>
+</body>
+</html>

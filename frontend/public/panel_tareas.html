@@ -1,0 +1,31 @@
+<!-- Insertar dentro del panel lateral donde debe mostrarse el gestor de tareas -->
+<aside id="panel-tareas-adaptiweb" class="adaptiweb-tasks-panel" aria-label="Gestión de tareas">
+  <div class="tasks-header">
+    <h2>Mis tareas</h2>
+    <span id="tasks-counter" class="tasks-counter">0 pendientes</span>
+  </div>
+
+  <form id="form-nueva-tarea" class="tasks-form" novalidate>
+    <div class="field-group">
+      <label for="input-titulo-tarea">Nueva tarea</label>
+      <input
+        id="input-titulo-tarea"
+        type="text"
+        maxlength="180"
+        placeholder="Ej. Tomar medicamento o repasar apuntes"
+        required
+      />
+    </div>
+
+    <div class="field-group">
+      <label for="input-recordatorio-tarea">Recordatorio (opcional)</label>
+      <input id="input-recordatorio-tarea" type="datetime-local" />
+    </div>
+
+    <button type="submit" class="btn-add-task">+ Agregar tarea</button>
+  </form>
+
+  <p id="tasks-feedback" class="tasks-feedback" role="status" aria-live="polite"></p>
+
+  <ul id="lista-tareas" class="tasks-list"></ul>
+</aside>
