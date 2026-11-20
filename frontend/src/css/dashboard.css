@@ -203,28 +203,141 @@ body {
   width: 100%;
 }
 
-/* MENÚ LATERAL (SIDEBAR) */
+/* ===== PANEL LATERAL DESPLEGABLE =====
+   Se desliza desde la derecha y sus opciones aparecen una a una.
+   Para ajustar el ritmo, cambia SOLO estas tres variables:
+     --retraso-opcion : pausa entre una opción y la siguiente (más alto = más lento)
+     --dur-opcion     : lo que tarda cada opción en aparecer
+     --retraso-base   : espera antes de que salga la primera opción */
 .sidebar {
+  --dur-panel: 280ms;
+  --retraso-base: 140ms;
+  --retraso-opcion: 90ms;
+  --dur-opcion: 260ms;
+
   position: fixed;
   top: 10vh;
   right: 0;
-  width: 300px;
-  height: fit-content;
-  box-sizing: border-box;
+  bottom: 0;
+  width: min(340px, 100vw);
   background-color: var(--bg);
   border-left: 1px solid var(--fg);
   z-index: 100;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  border-bottom: 2px solid var(--fg);
+  overflow-y: auto;
+
+  /* cerrado: fuera de pantalla y fuera del orden de tabulación */
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform var(--dur-panel) cubic-bezier(0.4, 0, 1, 1),
+              visibility 0s linear var(--dur-panel);
 }
 
-.close-btn {
-  align-self: flex-end;
-  background: none;
+.sidebar.abierto {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform var(--dur-panel) cubic-bezier(0.2, 0.8, 0.2, 1),
+              visibility 0s;
+}
+
+/* Vistas internas (menú y herramientas) */
+.sidebar-vista {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-vista[hidden] {
+  display: none;
+}
+
+/* Las opciones del menú entran escalonadas, cada una un poco después de la anterior */
+@keyframes opcionEntra {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.sidebar.abierto #vista-menu:not([hidden]) .opcionMenu {
+  animation: opcionEntra var(--dur-opcion) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--retraso-base) + var(--i, 0) * var(--retraso-opcion));
+}
+
+/* Al abrir una herramienta, su contenido aparece con un fundido corto */
+@keyframes vistaEntra {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.sidebar.abierto .sidebar-vista:not(#vista-menu):not([hidden]) {
+  animation: vistaEntra 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Las opciones son <button> o <a>: se ven igual */
+.sidebar .opcionMenu {
   border: none;
-  color: var(--fg);
-  font-size: 2rem;
+  border-bottom: 1px solid var(--fg);
+  border-radius: 0;
+  font-family: inherit;
+  text-align: left;
   cursor: pointer;
+}
+
+.sidebar .opcionMenu:focus-visible,
+.btn-volver:focus-visible,
+.icon-btn:focus-visible {
+  outline: 3px solid var(--fg);
+  outline-offset: -3px;
+}
+
+/* Cabecera de cada herramienta */
+.vista-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--fg);
+}
+
+.btn-volver {
+  background: none;
+  border: 1px solid var(--fg);
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--fg);
+  font-size: 1.2rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-volver:hover {
+  background-color: var(--fg);
+  color: var(--bg);
+}
+
+.vista-titulo {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.vista-contenido {
+  padding: 1.25rem 1.5rem;
+}
+
+.vista-vacia {
+  opacity: 0.7;
+}
+
+/* Quien tiene activado "reducir movimiento" en su sistema no ve animaciones */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar.abierto {
+    transition: none;
+  }
+
+  .sidebar.abierto #vista-menu:not([hidden]) .opcionMenu,
+  .sidebar.abierto .sidebar-vista:not(#vista-menu):not([hidden]) {
+    animation: none;
+  }
 }
