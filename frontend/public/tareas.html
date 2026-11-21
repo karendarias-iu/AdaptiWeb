@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de tareas - AdaptiWeb</title>
+  <!-- tema.js va en el head y sin defer: aplica el contraste guardado antes de pintar la página -->
+  <script src="../src/js/tema.js"></script>
+  <link rel="stylesheet" href="../src/css/dashboard.css">
+  <link rel="stylesheet" href="../src/css/tareas.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="barraSuperior">
+      <a href="Inicio.html" aria-label="Ir a la pantalla de inicio de sesión"><img src="assets/AdaptiWeb_logo.png" alt="AdaptiWeb Logo" class="logotipo"></a>
+      <span class="textoLogo">AdaptiWeb</span>
+    </div>
+    <a href="dashboard.html" class="btn btn-outline enlace-volver">← Volver</a>
+  </header>
+
+  <main class="main-container contenedor-tareas">
+    <section class="tareas-bloque" aria-labelledby="titulo-tareas">
+      <h1 id="titulo-tareas" class="titulo-tareas">Mis tareas</h1>
+      <p id="tareas-estado" class="tareas-estado" role="status" aria-live="polite"></p>
+      <!-- Cuadrados de tareas (3 por fila). El último cuadro es siempre "Crear tarea" -->
+      <ul id="tareas-grid" class="tareas-grid"></ul>
+    </section>
+  </main>
+
+  <!-- Ventana emergente: crear tarea -->
+  <dialog id="modal-crear" class="modal" aria-labelledby="crear-encabezado">
+    <form id="form-crear" class="modal-cuerpo" novalidate>
+      <button type="button" class="btn btn-outline modal-salir" data-cerrar>← Salir</button>
+      <h2 id="crear-encabezado" class="modal-titulo">Crear tarea</h2>
+
+      <div class="campo">
+        <label for="crear-titulo">Título</label>
+        <input type="text" id="crear-titulo" maxlength="100" autocomplete="off">
+      </div>
+      <div class="campo">
+        <label for="crear-descripcion">Descripción</label>
+        <textarea id="crear-descripcion" maxlength="255" rows="4"></textarea>
+      </div>
+      <div class="campo">
+        <label for="crear-fecha">Fecha y hora de finalización</label>
+        <input type="datetime-local" id="crear-fecha">
+      </div>
+
+      <p id="crear-error" class="mensaje-error" role="alert"></p>
+      <div class="modal-acciones">
+        <button type="submit" id="btn-crear" class="btn btn-light">Crear</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Ventana emergente: detalle de la tarea -->
+  <dialog id="modal-detalle" class="modal" aria-labelledby="detalle-titulo">
+    <div class="modal-cuerpo">
+      <button type="button" class="btn btn-outline modal-salir" data-cerrar>← Salir</button>
+      <h2 id="detalle-titulo" class="modal-titulo"></h2>
+
+      <div class="detalle-datos">
+        <p class="detalle-etiqueta">Descripción</p>
+        <p id="detalle-descripcion" class="detalle-texto"></p>
+        <p class="detalle-etiqueta">Fecha de finalización</p>
+        <p id="detalle-fecha" class="detalle-texto"></p>
+      </div>
+
+      <!-- Entre los datos y los botones: recordatorio -->
+      <form id="form-recordatorio" class="campo recordatorio" novalidate>
+        <label for="detalle-recordatorio">Recordatorio</label>
+        <div class="recordatorio-fila">
+          <input type="datetime-local" id="detalle-recordatorio">
+          <button type="submit" id="btn-recordatorio" class="btn btn-outline">Guardar</button>
+        </div>
+        <small id="detalle-recordatorio-info" class="ayuda"></small>
+      </form>
+
+      <p id="detalle-error" class="mensaje-error" role="alert"></p>
+      <div class="modal-acciones">
+        <button type="button" id="btn-finalizar" class="btn btn-light">Finalizar</button>
+        <button type="button" id="btn-eliminar" class="btn btn-outline" disabled>Eliminar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="../src/js/recordatorios.js"></script>
+  <script src="../src/js/tareas.js"></script>
+</body>
+</html>

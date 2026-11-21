@@ -16,6 +16,7 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const preferenciasRoutes = require('./src/routes/preferenciasRoutes');
 const textoRoutes = require('./src/routes/textoRoutes');
+const taskRoutes = require('./src/routes/taskRoutes');
 const { obtenerPreferenciasUsuario } = require('./src/controllers/preferenciasController');
 
 //lee el archivo (.env) y carga las variables privadas de la base de datos
@@ -51,6 +52,9 @@ app.use('/api/preferencias', preferenciasRoutes);
 
 //Procesamiento de texto directo y extracción limpia desde URL externa
 app.use('/api/texto', textoRoutes);
+
+//Tareas del usuario (listar, crear, finalizar, recordatorios, eliminar). Requieren token de sesión
+app.use('/api/tareas', taskRoutes);
 
 //Registro de usuarios
 //define la ruta de tipo POST, esta recibe los datos del formulario
@@ -240,18 +244,6 @@ app.post('/api/login', async (req, res) => {
     return res.status(500).json({ message: 'Error interno del servidor.' });
   }
 });
-const {
-  verificarToken,
-  listarTareas,
-  crearTarea,
-  alternarCompletada,
-  eliminarTarea
-} = require('./src/controllers/taskController');
-
-app.get('/api/tareas', verificarToken, listarTareas);
-app.post('/api/tareas', verificarToken, crearTarea);
-app.patch('/api/tareas/:id/completar', verificarToken, alternarCompletada);
-app.delete('/api/tareas/:id', verificarToken, eliminarTarea);
 //inicializa el servidor, esta atenta de las peticiones en el puerto definido
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
 

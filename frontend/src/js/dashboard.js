@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
   navTasks?.addEventListener('click', (e) => {
     e.preventDefault();
     ajustarMenu(false);
-    console.log('Abrir Lista de tareas');
+    window.location.href = 'tareas.html';
   });
 
   navTimer?.addEventListener('click', (e) => {
