@@ -21,14 +21,17 @@
   </header>
 
   <!-- Menu desplegable -->
-  <aside id="sidebar" class="sidebar" aria-label="Menú principal">
-    <nav id="vista-menu" class="sidebar-vista sidebar-nav">
-      <a href="tareas.html" id="nav-tasks" class="opcionMenu" style="--i:0">Lista de tareas</a>
-      <a href="temporizador.html" id="nav-timer" class="opcionMenu" style="--i:1">Temporizador</a>
-      <a href="preferencias.html" id="nav-prefs" class="opcionMenu" style="--i:2">Preferencias</a>
-      <a href="#" id="nav-settings" class="opcionMenu" style="--i:3">Configuración</a>
-      <a href="#" id="nav-logout" class="opcionMenu" style="--i:4">Cerrar sesión</a>
-    </nav>
+  <aside id="sidebar" class="sidebar">
+    <div id="vista-menu" class="sidebar-vista">
+      <nav class="sidebar-nav">
+        <a href="tareas.html" id="nav-tasks" class="opcionMenu" style="--i:0">Lista de tareas</a>
+        <a href="temporizador.html" id="nav-timer" class="opcionMenu" style="--i:1">Temporizador</a>
+        <a href="marcadores.html" id="nav-bookmarks" class="opcionMenu" style="--i:2">Marcador</a>
+        <a href="preferencias.html" id="nav-prefs" class="opcionMenu" style="--i:3">Preferencias</a>
+        <a href="#" id="nav-settings" class="opcionMenu" style="--i:4">Configuración</a>
+        <a href="#" id="nav-logout" class="opcionMenu" style="--i:5">Cerrar sesión</a>
+      </nav>
+    </div>
   </aside>
 
   <main class="main-container">
@@ -59,6 +62,5 @@
   </main>
 
   <script src="../src/js/dashboard.js"></script>
-  <script src="../src/js/recordatorios.js"></script>
 </body>
 </html>

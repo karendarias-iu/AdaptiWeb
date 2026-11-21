@@ -16,8 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebar = document.getElementById('sidebar');
 
   // Enlaces del menú lateral
-  const navTasks = document.getElementById('nav-tasks');
-  const navTimer = document.getElementById('nav-timer');
   const navSettings = document.getElementById('nav-settings');
   const navLogout = document.getElementById('nav-logout');
 
@@ -47,28 +45,31 @@ document.addEventListener('DOMContentLoaded', () => {
     dashboardTitle.textContent = `¿Qué harás hoy, ${usuario.nombre}?`;
   }
 
-  // 4. Abrir / cerrar menú lateral desplegable
-  // El CSS del panel usa la clase "abierto" (no "hidden"): sin ella el panel queda fuera de pantalla
-  function ajustarMenu(abrir) {
+  // 4. Abrir / cerrar menú lateral desplegable (la clase "abierto" lo desliza desde la derecha)
+  function abrirMenu(abrir) {
     sidebar.classList.toggle('abierto', abrir);
     menuBtn?.setAttribute('aria-expanded', String(abrir));
   }
 
   menuBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
-    ajustarMenu(!sidebar.classList.contains('abierto'));
+    abrirMenu(!sidebar.classList.contains('abierto'));
   });
 
-  // Cerrar el sidebar si se hace clic fuera de él
+  // Cerrar el sidebar si se hace clic fuera de él o se pulsa Escape
   document.addEventListener('click', (e) => {
     if (
       sidebar &&
       sidebar.classList.contains('abierto') &&
       !sidebar.contains(e.target) &&
-      e.target !== menuBtn
+      !menuBtn?.contains(e.target)
     ) {
-      ajustarMenu(false);
+      abrirMenu(false);
     }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') abrirMenu(false);
   });
 
   // 5. Cerrar sesión
@@ -80,22 +81,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.href = 'Inicio.html';
   });
 
-  // 6. Navegación del menú lateral
-  navTasks?.addEventListener('click', (e) => {
-    e.preventDefault();
-    ajustarMenu(false);
-    window.location.href = 'tareas.html';
-  });
-
-  navTimer?.addEventListener('click', (e) => {
-    e.preventDefault();
-    ajustarMenu(false);
-    window.location.href = 'temporizador.html';
-  });
-
+  // 6. Navegación del menú lateral (Lista de tareas, Temporizador, Marcador y Preferencias son enlaces normales)
   navSettings?.addEventListener('click', (e) => {
     e.preventDefault();
-    ajustarMenu(false);
+    abrirMenu(false);
     console.log('Abrir Configuración');
   });
 

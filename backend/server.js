@@ -16,7 +16,7 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const preferenciasRoutes = require('./src/routes/preferenciasRoutes');
 const textoRoutes = require('./src/routes/textoRoutes');
-const taskRoutes = require('./src/routes/taskRoutes');
+const marcadoresRoutes = require('./src/routes/marcadoresRoutes');
 const { obtenerPreferenciasUsuario } = require('./src/controllers/preferenciasController');
 
 //lee el archivo (.env) y carga las variables privadas de la base de datos
@@ -53,40 +53,29 @@ app.use('/api/preferencias', preferenciasRoutes);
 //Procesamiento de texto directo y extracción limpia desde URL externa
 app.use('/api/texto', textoRoutes);
 
-//Tareas del usuario (listar, crear, finalizar, recordatorios, eliminar). Requieren token de sesión
-app.use('/api/tareas', taskRoutes);
+//Marcadores personales del usuario
+app.use('/api/marcadores', marcadoresRoutes);
 
 //Registro de usuarios
-//define la ruta de tipo POST, esta recibe los datos del formulario
 app.post('/api/register', async (req, res) => {
-  //desestructura los valores contenidos en el formulario
   const { nombre, email, password } = req.body;
 
   try {
-    //se verifica si el correo ya existe en la base de datos
-    //se hace un arreglo de nombre usuarios en donde se almacena el o los usuarios que tengan el mismo correo (email)
     const [usuarios] = await pool.query('SELECT id_usuario FROM Usuarios WHERE correo = ?', [email]);
-    //si hay almenos un valor en el arreglo es porque el correo ya ha sido registrado
     if (usuarios.length > 0) {
-      //se envia una respuesta de tipo 400 (bad request) que corresponde a un error de entrada por el usuario
-      //adicional pasa el objeto javaScript a json con el mensaje correspondiente
       return res.status(400).json({ message: 'El correo electrónico ya está registrado.' });
     }
 
-    //Encriptar la contraseña con bcrypt, alpilca el algoritmo con una alteracion de 10 rondas
     const passwordHash = await bcrypt.hash(password, 10);
 
-    //Insertar el usuario en la tabla usuario en MySQL
     const [resultado] = await pool.query(
       'INSERT INTO Usuarios (nombre, correo, contraseña, condicion) VALUES (?, ?, ?, ?)',
       [nombre, email, passwordHash, 'Ninguna']
     );
 
-    //Muestra el mensaje de que el usuario fue registrado con exito
     return res.status(201).json({ message: 'Usuario registrado exitosamente.' });
 
   } catch (error) {
-    //en caso de error lo muestra
     console.error('Error en el registro:', error);
     return res.status(500).json({ message: 'Error interno del servidor.' });
   }
@@ -98,27 +87,21 @@ app.post('/api/forgot-password', async (req, res) => {
   const { email } = req.body;
 
   try {
-    //valida si la cuenta existe
     const [usuarios] = await pool.query('SELECT * FROM Usuarios WHERE correo = ?', [email]);
     if (usuarios.length === 0) {
       return res.status(404).json({ message: 'No existe una cuenta con ese correo.' });
     }
 
-    // Genera un token que expira automáticamente en 15 minutos
     const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '15m' });
-
-    // Guarda el token en la tabla Usuarios
     await pool.query('UPDATE Usuarios SET reset_token = ? WHERE correo = ?', [token, email]);
 
     const resetLink = `https://${req.get('host')}/reset-password.html?token=${token}`;
 
     await transporter.sendMail({
-     from: `"AdaptiWeb" <${process.env.EMAIL_USER}>`,
+      from: `"AdaptiWeb" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Restablece tu contraseña de AdaptiWeb',
-      // Versión en texto plano (muy valorada por filtros antispam)
       text: `Hola ${usuarios[0].nombre},\n\nRecibimos una solicitud para restablecer tu contraseña en AdaptiWeb.\nCopia y pega el siguiente enlace en tu navegador (válido por 15 minutos):\n\n${resetLink}\n\nSi no solicitaste este cambio, puedes ignorar este correo.`,
-      // Versión HTML con botón limpio (sin mostrar la URL gigante)
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; color: #333;">
           <h2 style="color: #000;">Restablecer contraseña</h2>
@@ -159,10 +142,8 @@ app.post('/api/reset-password', async (req, res) => {
   }
 
   try {
-    // 1. Verifica firma y expiración (15m) del JWT
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // 2. Comprueba que el token coincida con el guardado en la BD (evita doble uso)
     const [usuarios] = await pool.query(
       'SELECT id_usuario FROM Usuarios WHERE correo = ? AND reset_token = ?',
       [decoded.email, token]
@@ -172,7 +153,6 @@ app.post('/api/reset-password', async (req, res) => {
       return res.status(400).json({ message: 'Este enlace ya fue utilizado o no es válido.' });
     }
 
-    // 3. Encripta la nueva contraseña y limpia el token
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await pool.query(
       'UPDATE Usuarios SET contraseña = ?, reset_token = NULL WHERE correo = ?',
@@ -214,14 +194,12 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ message: 'Correo o contraseña incorrectos.' });
     }
 
-    // Genera el JWT de sesión
     const token = jwt.sign(
       { id: usuario.id_usuario, email: usuario.correo, nombre: usuario.nombre },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    // Recupera las preferencias guardadas del usuario (si falla, el frontend las pide después)
     let preferencias = null;
     try {
       preferencias = await obtenerPreferenciasUsuario(usuario.id_usuario);
@@ -244,7 +222,7 @@ app.post('/api/login', async (req, res) => {
     return res.status(500).json({ message: 'Error interno del servidor.' });
   }
 });
-//inicializa el servidor, esta atenta de las peticiones en el puerto definido
+
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
 
 module.exports = app;

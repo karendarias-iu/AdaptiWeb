@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marcadores - AdaptiWeb</title>
+  <!-- tema.js aplica el contraste guardado antes de pintar la página -->
+  <script src="../src/js/tema.js"></script>
+  <link rel="stylesheet" href="../src/css/textoAdaptado.css">
+  <link rel="stylesheet" href="../src/css/dashboard.css">
+  <link rel="stylesheet" href="../src/css/marcadores.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="barraSuperior">
+      <a href="Inicio.html" aria-label="Ir a la pantalla de inicio de sesión"><img src="assets/AdaptiWeb_logo.png" alt="AdaptiWeb Logo" class="logotipo"></a>
+      <span class="textoLogo">AdaptiWeb</span>
+    </div>
+    <a href="dashboard.html" class="btn btn-outline enlace-volver">← Volver</a>
+  </header>
+
+  <main class="main-container contenedor-marcadores">
+    <section class="modulo-marcadores" aria-label="Mis marcadores">
+      <h1 class="titulo-marcadores">Marcadores</h1>
+
+      <!-- Lista apilada de rectángulos achatados (favoritos arriba, luego normales y al final "Crear marcador") -->
+      <div id="lista-marcadores" class="lista-marcadores" role="list"></div>
+    </section>
+  </main>
+
+  <!-- Ventana emergente de detalle del marcador -->
+  <div id="modal-detalle" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="detalle-titulo">
+    <div class="modal-card">
+      <div class="modal-top-bar">
+        <button type="button" id="btn-cerrar-detalle" class="btn-cerrar-modal" aria-label="Cerrar ventana">✕</button>
+        <button type="button" id="btn-toggle-favorito" class="btn-favorito-modal" aria-pressed="false">☆ Añadir a favoritos</button>
+      </div>
+
+      <h2 id="detalle-titulo" class="modal-titulo"></h2>
+      <a id="detalle-url" class="modal-url" href="#" target="_blank" rel="noopener noreferrer"></a>
+
+      <div class="modal-bottom-bar">
+        <button type="button" id="btn-eliminar-marcador" class="btn-eliminar-modal">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ventana emergente para crear marcador -->
+  <div id="modal-crear" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="crear-titulo-modal">
+    <div class="modal-card">
+      <div class="modal-top-bar">
+        <span id="crear-titulo-modal" class="modal-subtitulo">Crear marcador</span>
+        <button type="button" id="btn-cerrar-crear" class="btn-cerrar-modal" aria-label="Cerrar ventana">✕</button>
+      </div>
+
+      <form id="form-crear-marcador" class="form-marcador">
+        <div class="campo-grupo">
+          <label for="input-titulo-marcador">Título del marcador</label>
+          <input type="text" id="input-titulo-marcador" class="input-modal" placeholder="Ej. Artículo sobre accesibilidad" required maxlength="150">
+        </div>
+
+        <div class="campo-grupo">
+          <label for="input-url-marcador">URL</label>
+          <input type="url" id="input-url-marcador" class="input-modal" placeholder="https://ejemplo.com" required>
+        </div>
+
+        <label class="checkbox-favorito">
+          <input type="checkbox" id="input-favorito-marcador">
+          <span>Marcar como favorito</span>
+        </label>
+
+        <div class="modal-bottom-bar">
+          <button type="submit" class="btn btn-light">Guardar marcador</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../src/js/marcadores.js"></script>
+</body>
+</html>
