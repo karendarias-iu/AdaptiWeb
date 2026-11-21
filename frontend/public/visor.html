@@ -21,6 +21,18 @@
     <article id="cuadro-lectura" class="cuadro-lectura texto-adaptado" aria-label="Área de lectura"></article>
   </main>
 
+  <!-- Lector por voz: botón central izquierdo que despliega los controles de reproducción -->
+  <aside id="lector" class="lector" aria-label="Lector por voz">
+    <button type="button" id="lector-toggle" class="lector-btn lector-toggle" aria-expanded="false" aria-controls="lector-controles">Lector por voz</button>
+    <div id="lector-controles" class="lector-controles">
+      <button type="button" id="tts-reproducir" class="lector-btn" style="--i:0">Reproducir</button>
+      <button type="button" id="tts-pausar" class="lector-btn" style="--i:1" disabled>Pausar</button>
+      <button type="button" id="tts-detener" class="lector-btn" style="--i:2" disabled>Detener</button>
+      <p id="tts-estado" class="lector-estado" role="status" aria-live="polite"></p>
+    </div>
+  </aside>
+
   <script src="../src/js/visor.js"></script>
+  <script src="../src/js/tts.js"></script>
 </body>
 </html>

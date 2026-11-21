@@ -89,3 +89,87 @@ body {
     padding: 4.5rem 1.25rem 2rem 1.25rem;
   }
 }
+
+/* ===== LECTOR POR VOZ =====
+   Botón fijo en el centro-izquierda. Al pulsarlo, los tres controles aparecen debajo, uno tras otro. */
+.lector {
+  position: fixed;
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-1.25rem); /* centra verticalmente el botón principal (alto 2.5rem); los controles crecen hacia abajo */
+  width: 10.5rem;
+  z-index: 10;
+  font-family: 'Botones', sans-serif;
+}
+
+.lector-btn {
+  display: block;
+  width: 100%;
+  height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 30px;
+  border: 1px solid var(--fg);
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.lector-btn:hover:not(:disabled),
+.lector-btn:focus-visible,
+.lector-toggle[aria-expanded="true"] {
+  background-color: var(--fg);
+  color: var(--bg);
+}
+
+.lector-btn:focus-visible {
+  outline: 3px solid var(--fg);
+  outline-offset: 2px;
+}
+
+.lector-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.lector-controles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* Cerrado: los controles no se ven ni se pueden tabular */
+.lector:not(.abierto) .lector-controles {
+  display: none;
+}
+
+/* Al abrir, cada botón entra un poco después del anterior (igual que el menú del dashboard).
+   fill-mode "backwards": al terminar la animación se respeta el estilo normal (p. ej. el de deshabilitado). */
+@keyframes lectorEntra {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.lector.abierto .lector-controles .lector-btn {
+  animation: lectorEntra 260ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(90ms + var(--i, 0) * 90ms);
+}
+
+.lector-estado {
+  font-size: 0.85rem;
+  line-height: 1.3;
+  color: var(--fg);
+}
+
+.lector-estado:empty {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lector.abierto .lector-controles .lector-btn {
+    animation: none;
+  }
+}
