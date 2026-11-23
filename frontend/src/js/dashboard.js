@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. Elementos del DOM
   const dashboardTitle = document.querySelector('.dashboard-title');
-  const menuBtn = document.getElementById('menu-btn');
+  const menuBtn = document.getElementById('botonMenu');
   const sidebar = document.getElementById('sidebar');
 
   // Enlaces del menú lateral
@@ -251,4 +251,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (btnAbrirVisor) btnAbrirVisor.disabled = false;
     }
   });
+  // Cargar y extraer automáticamente si el usuario viene desde "Abrir marcador"
+  const urlMarcador = sessionStorage.getItem('adaptiweb_url_marcador');
+  if (urlMarcador) {
+    sessionStorage.removeItem('adaptiweb_url_marcador');
+
+    const inputUrl = document.querySelector('.input-search');
+    const btnEnviarUrl = document.querySelector('.send-btn');
+
+    if (inputUrl && btnEnviarUrl) {
+      inputUrl.value = urlMarcador;
+      btnEnviarUrl.click();
+    }
+  }
 });

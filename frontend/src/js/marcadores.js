@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnCerrarDetalle = document.getElementById('btn-cerrar-detalle');
   const btnToggleFavorito = document.getElementById('btn-toggle-favorito');
   const btnEliminarMarcador = document.getElementById('btn-eliminar-marcador');
+  const btnAbrirMarcador = document.getElementById('btn-abrir-marcador');
 
   const modalCrear = document.getElementById('modal-crear');
   const btnCerrarCrear = document.getElementById('btn-cerrar-crear');
@@ -168,6 +169,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   function cerrarModalCrear() {
     modalCrear?.classList.add('hidden');
   }
+
+  // Abrir marcador pasando por dashboard para extraer el contenido y abrir el visor
+  btnAbrirMarcador?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!marcadorSeleccionado || !marcadorSeleccionado.url) return;
+
+    sessionStorage.setItem('adaptiweb_url_marcador', marcadorSeleccionado.url);
+    window.location.href = 'dashboard.html';
+  });
 
   // Alternar favorito desde el botón superior derecha del modal
   btnToggleFavorito?.addEventListener('click', async () => {

@@ -225,6 +225,20 @@
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+.btn-abrir-marcador{
+  padding: 0.55rem 1.5rem;
+  margin-right: 15px;
+  border-radius: 24px;
+  border: 1.5px solid #444fef;
+  background-color: transparent;
+  color: #444fef;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
 .btn-eliminar-modal:hover,
 .btn-eliminar-modal:focus-visible {
   background-color: #ef4444;
