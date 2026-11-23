@@ -16,7 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebar = document.getElementById('sidebar');
 
   // Enlaces del menú lateral
-  const navSettings = document.getElementById('nav-settings');
+
+  const navTasks = document.getElementById('nav-tasks');
+  const navTimer = document.getElementById('nav-timer');
   const navLogout = document.getElementById('nav-logout');
 
   // Controles de los paneles principales
@@ -24,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnEnviarUrl = document.querySelector('.send-btn');
   const textareaTexto = document.querySelector('.text-area-input');
   const btnAbrirVisor = document.querySelector('.btn.btn-light');
+  const btnLimpiarTexto = document.getElementById('limpiarTexto');
 
   // Sincroniza las preferencias guardadas en la BD (contraste, fuente, etc.) con este navegador
   window.AdaptiPrefs?.cargarDesdeServidor(token).catch(() => {
@@ -50,6 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
     sidebar.classList.toggle('abierto', abrir);
     menuBtn?.setAttribute('aria-expanded', String(abrir));
   }
+
+  btnLimpiarTexto.addEventListener('click', (e)=> {
+    textareaTexto.value = '';
+  });
 
   menuBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -81,11 +88,18 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.href = 'Inicio.html';
   });
 
-  // 6. Navegación del menú lateral (Lista de tareas, Temporizador, Marcador y Preferencias son enlaces normales)
-  navSettings?.addEventListener('click', (e) => {
+  // 6. Navegación del menú lateral
+  navTasks?.addEventListener('click', (e) => {
     e.preventDefault();
-    abrirMenu(false);
-    console.log('Abrir Configuración');
+    ajustarMenu(false);
+    window.location.href = 'tareas.html';
+  });
+
+  navTimer?.addEventListener('click', (e) => {
+    e.preventDefault();
+    ajustarMenu(false);
+    window.location.href = 'temporizador.html';
+
   });
 
   // 7. Panel 1: Enviar URL de sitio o PDF al backend para extraer texto limpio
@@ -110,6 +124,41 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputUrl) inputUrl.disabled = true;
 
     try {
+      if (url.toLowerCase().split('?')[0].endsWith('.pdf') && window.pdfjsLib) {
+        try {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+          const pdf = await window.pdfjsLib.getDocument(url).promise;
+          let textoCompleto = '';
+          const maxPaginas = Math.min(pdf.numPages, 60); // Evita saturar la memoria en libros muy largos
+
+          for (let i = 1; i <= maxPaginas; i++) {
+            const pagina = await pdf.getPage(i);
+            const contenido = await pagina.getTextContent();
+            const textoPagina = contenido.items.map((item) => item.str).join(' ');
+            textoCompleto += textoPagina + '\n\n';
+          }
+
+          if (!textoCompleto.trim()) {
+            alert('El PDF no contiene texto seleccionable.');
+            return;
+          }
+
+          sessionStorage.setItem('adaptiweb_contenido', JSON.stringify({
+            tipo: 'url',
+            valor: textoCompleto.trim().slice(0, 150000)
+          }));
+
+          window.location.href = 'visor.html';
+          return;
+        } catch (errPdf) {
+          console.error('Error leyendo PDF en navegador:', errPdf);
+          alert('Este servidor de PDF bloquea la lectura externa (CORS). Prueba descargando el texto o usando una URL web.');
+          return;
+        }
+      }
+
       const respuesta = await fetch('/api/texto/procesar', {
         method: 'POST',
         headers: {

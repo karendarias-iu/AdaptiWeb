@@ -5,6 +5,7 @@
  * limpio de una URL descartando elementos superfluos (menús, publicidad, scripts, etc.).
  */
 
+
 function limpiarTextoPlano(texto) {
   return String(texto || '')
     .replace(/\r\n/g, '\n')
@@ -134,7 +135,7 @@ async function procesarContenido(req, res) {
           message: `No se pudo acceder a la URL (el sitio respondió con estado HTTP ${respuesta.status}). Verifica que la página esté disponible.`
         });
       }
-
+      
       const contentType = (respuesta.headers.get('content-type') || '').toLowerCase();
 
       if (contentType.includes('application/pdf')) {
@@ -142,6 +143,7 @@ async function procesarContenido(req, res) {
           message: 'El enlace apunta a un archivo PDF directo. Por ahora ingresa la URL de una página web con texto HTML.'
         });
       }
+      
 
       if (!contentType.includes('text/html') && !contentType.includes('text/plain') && !contentType.includes('application/xhtml')) {
         return res.status(422).json({
