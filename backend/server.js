@@ -17,6 +17,7 @@ const nodemailer = require('nodemailer');
 const preferenciasRoutes = require('./src/routes/preferenciasRoutes');
 const textoRoutes = require('./src/routes/textoRoutes');
 const marcadoresRoutes = require('./src/routes/marcadoresRoutes');
+const tareasRoutes = require('./src/routes/taskRoutes');
 const { obtenerPreferenciasUsuario } = require('./src/controllers/preferenciasController');
 
 //lee el archivo (.env) y carga las variables privadas de la base de datos
@@ -56,6 +57,8 @@ app.use('/api/texto', textoRoutes);
 //Marcadores personales del usuario
 app.use('/api/marcadores', marcadoresRoutes);
 
+app.use('/api/tareas', tareasRoutes);
+
 //Registro de usuarios
 app.post('/api/register', async (req, res) => {
   const { nombre, email, password } = req.body;
@@ -78,6 +81,62 @@ app.post('/api/register', async (req, res) => {
   } catch (error) {
     console.error('Error en el registro:', error);
     return res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+});
+
+//Text to speech
+app.post('/api/tts', async (req, res) => {
+  const { texto, voz } = req.body;
+
+  if (!texto || !texto.trim()) {
+    return res.status(400).json({ message: 'No se envió texto para leer.' });
+  }
+
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  const vocesDisponibles = {
+    femenina: process.env.ELEVENLABS_VOICE_FEMENINA,
+    masculina: process.env.ELEVENLABS_VOICE_MASCULINA
+  };
+
+  // Usa la voz seleccionada por el usuario
+  const voiceId = vocesDisponibles[voz] || vocesDisponibles.femenina;
+
+  if (!apiKey || !voiceId) {
+    return res.status(500).json({ message: 'Falta configurar las voces de ElevenLabs en el servidor.' });
+  }
+
+  try {
+    const textoRecortado = texto.trim().slice(0, 2500);
+
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'audio/mpeg'
+      },
+      body: JSON.stringify({
+        text: textoRecortado,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Error ElevenLabs:', errorData);
+      return res.status(response.status).json({ message: 'Error al generar la voz en ElevenLabs.' });
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    res.set('Content-Type', 'audio/mpeg');
+    return res.send(Buffer.from(arrayBuffer));
+  } catch (error) {
+    console.error('Error en /api/tts:', error);
+    return res.status(500).json({ message: 'Error interno al procesar el audio.' });
   }
 });
 

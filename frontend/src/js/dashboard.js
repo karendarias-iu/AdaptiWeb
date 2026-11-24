@@ -1,55 +1,86 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Verificar sesión activa
+
+  /* Elementos de la pagina
+- 
+- dashboardTitle: titulo principal del panel que muestra un saludo al usuario con su nombre registrado
+- menuBtn: boton de icono en forma de menu en la barra superior que despliega o contrae el menu lateral
+- sidebar: panel lateral desplegable con las opciones de navegacion (tareas, temporizador, marcadores, preferencias y cerrar sesion)
+- navTasks: enlace del menu lateral que redirige al modulo de lista de tareas
+- navTimer: enlace del menu lateral que redirige al modulo de temporizador pomodoro
+- navLogout: enlace del menu lateral que cierra la sesion activa del usuario y lo manda al inicio
+- inputUrl: campo de entrada de texto donde se escribe o pega la URL del sitio web o pdf que se quiera ver en el visor
+- btnEnviarUrl: boton para enviar el enlace URL, procesarlo y mostrarlo en el visor
+- textareaTexto: campo de texto donde el usuario pega o escribe texto que desee ver en el visor
+- btnAbrirVisor: boton que procesa lo puesto en el campo de texto y lo manda al visor
+- btnLimpiarTexto: boton que vacia el contenido escrito en el area de texto manual
+   */
+const dashboardTitle = document.querySelector('.dashboard-title');
+const menuBtn = document.getElementById('botonMenu');
+const sidebar = document.getElementById('sidebar');
+const navTasks = document.getElementById('nav-tasks');
+const navTimer = document.getElementById('nav-timer');
+const navLogout = document.getElementById('nav-logout');
+const inputUrl = document.querySelector('.input-search');
+const btnEnviarUrl = document.querySelector('.send-btn');
+const textareaTexto = document.querySelector('.text-area-input');
+const btnAbrirVisor = document.querySelector('.btn.btn-light');
+const btnLimpiarTexto = document.getElementById('limpiarTexto');
+/**
+- variables y constantes de sesion
+- 
+- token: token de autenticacion JWT almacenado en el localStorage para validar las peticiones al servidor
+- usuarioGuardado: cadena JSON con los datos del usuario guardados en el localStorage
+- usuario: objeto con la información del usuario (nombre, correo, id)
+- urlMarcador: URL temporal almacenada en sessionStorage cuando el usuario abre un marcador guardado
+   */
   const token = localStorage.getItem('adaptiweb_token');
   const usuarioGuardado = localStorage.getItem('adaptiweb_usuario');
-
+  // Verifica si el usario tiene su sesion activa
   if (!token || !usuarioGuardado) {
     window.location.href = 'Inicio.html';
     return;
   }
-
   const usuario = JSON.parse(usuarioGuardado);
 
-  // 2. Elementos del DOM
-  const dashboardTitle = document.querySelector('.dashboard-title');
-  const menuBtn = document.getElementById('botonMenu');
-  const sidebar = document.getElementById('sidebar');
-
-  // Enlaces del menú lateral
-
-  const navTasks = document.getElementById('nav-tasks');
-  const navTimer = document.getElementById('nav-timer');
-  const navLogout = document.getElementById('nav-logout');
-
-  // Controles de los paneles principales
-  const inputUrl = document.querySelector('.input-search');
-  const btnEnviarUrl = document.querySelector('.send-btn');
-  const textareaTexto = document.querySelector('.text-area-input');
-  const btnAbrirVisor = document.querySelector('.btn.btn-light');
-  const btnLimpiarTexto = document.getElementById('limpiarTexto');
-
-  // Sincroniza las preferencias guardadas en la BD (contraste, fuente, etc.) con este navegador
+  /**
+  Sincronizacion inicial de las preferencias del usuario
+  - descarga las preferencias visuales guardadas en la base de datos del usuario
+  - restaura en el textarea el texto previo si el usuario regreso desde el visor de lectura
+  - la funcion cargarDesdeServidor se encuentra en tema.js
+   */
   window.AdaptiPrefs?.cargarDesdeServidor(token).catch(() => {
-    // Si falla, se queda con las preferencias guardadas en este navegador
+    // Si falla entonces carga las preferencias guardadas en el navegador del usuario
   });
 
-  // Restaurar el texto previo en el textarea si el usuario regresó del visor
+  // Restaurar el texto previo en el campo de texto si el usuario regresó del visor
   try {
     const contenidoPrevio = JSON.parse(sessionStorage.getItem('adaptiweb_contenido') || 'null');
     if (contenidoPrevio && contenidoPrevio.tipo === 'texto' && textareaTexto && !textareaTexto.value) {
       textareaTexto.value = contenidoPrevio.valor || '';
     }
   } catch {
-    // Ignorar errores de parseo
+    // Ignorar los errores
   }
+  // Al recargar la pagina, si hay una URL en el campo esta se borra
+  if (inputUrl) inputUrl.value = '';
 
-  // 3. Personalizar título con el nombre del usuario
+  // Al dar boton atras en la pagina, se borra el contenido si hay una URL en el campo
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted && inputUrl) inputUrl.value = '';
+  });
+
+  // Muestra un texto de informacion '¿Que haras hoy' junto con el nombre de usuario + '?'
   if (dashboardTitle && usuario.nombre) {
     dashboardTitle.textContent = `¿Qué harás hoy, ${usuario.nombre}?`;
   }
 
   // 4. Abrir / cerrar menú lateral desplegable (la clase "abierto" lo desliza desde la derecha)
   function abrirMenu(abrir) {
+    sidebar.classList.toggle('abierto', abrir);
+    menuBtn?.setAttribute('aria-expanded', String(abrir));
+  }
+
+  function ajustarMenu(abrir) {
     sidebar.classList.toggle('abierto', abrir);
     menuBtn?.setAttribute('aria-expanded', String(abrir));
   }

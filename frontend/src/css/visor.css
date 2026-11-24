@@ -54,6 +54,50 @@ body {
   background-color: var(--fg);
   color: var(--bg);
 }
+#tts-voz {
+  /* Misma forma de píldora y dimensiones que los botones */
+  width: 100%;
+  padding: 14px 42px; /* Espacio equilibrado para centrar el texto sin chocar con la flecha */
+  border-radius: 9999px;
+  
+  /* Colores y bordes idénticos al botón "Reproducir" */
+  background-color: #000000;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  
+  /* Tipografía y alineación */
+  font-family: inherit; /* Toma la misma fuente de tu página */
+  font-size: 16px;
+  text-align: center;
+  text-align-last: center; /* Centra el texto seleccionado en Chrome/Edge/Firefox */
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+
+  /* Quitar la flecha nativa fea del navegador */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* Añadir una flecha blanca minimalista personalizada */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-size: 16px;
+}
+
+/* Efecto sutil al pasar el mouse o enfocar */
+#tts-voz:hover,
+#tts-voz:focus {
+  background-color: #141414;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+/* Estilo para las opciones internas al desplegarse */
+#tts-voz option {
+  background-color: #000000;
+  color: #ffffff;
+}
 
 /* Contenedor principal que centra el cuadro */
 .visor-wrapper {
