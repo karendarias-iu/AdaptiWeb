@@ -1,12 +1,41 @@
 /**
- * Controlador de preferencias de accesibilidad
+ * ============================================================================
+ * preferenciasController.js - Controlador de preferencias de accesibilidad en AdaptiWeb
+ * ============================================================================
  *
- * Maneja la lectura y el guardado de las preferencias de texto de cada usuario:
- * fuente, tamaño, interlineado, espacio entre letras, espacio entre palabras y contraste.
+ * ¿Qué hace?
+ *   1. Define la lista blanca de tipografías permitidas (`FUENTES`), los modos de
+ *      contraste válidos (`CONTRASTES`), los rangos numéricos (`LIMITES`) y los
+ *      valores iniciales por defecto (`PREDETERMINADAS`).
+ *   2. Valida y normaliza los datos enviados por el usuario (convirtiendo decimales
+ *      con coma o punto y redondeando a 2 cifras decimales para MySQL).
+ *   3. Consulta las preferencias visuales de un usuario (`GET /api/preferencias` y
+ *      función reutilizable `obtenerPreferenciasUsuario` usada también en el login).
+ *   4. Crea o actualiza las preferencias del usuario (`PUT /api/preferencias`)
+ *      garantizando una única fila por cuenta mediante UPDATE seguido de INSERT
+ *      con `ON DUPLICATE KEY UPDATE`.
+ *
+ * Dependencias:
+ *   - ../../db -> piscina de conexiones MySQL (`pool`).
+ *   - Middleware de autenticación -> inyecta `req.usuario.id` para identificar la cuenta.
+ *
+ * Tablas afectadas en la base de datos:
+ *   - Preferencias (id_preferencia, id_usuario, fuente, tamanio_fuente, interlineado,
+ *     espacio_letras, espacio_palabras, contraste, fecha_actualizacion).
+ *
+ * @version 1.0.0
+ * @author Elkin Alzate Londoño
  */
 const pool = require('../../db');
 
-// Fuentes permitidas (deben coincidir con la lista de frontend/src/js/tema.js)
+/**
+ * Constantes de validación y valores predeterminados
+ * 
+ * FUENTES: catálogo permitido de familias tipográficas (sincronizado con frontend/src/js/tema.js)
+ * CONTRASTES: esquemas visuales admitidos ('claro' u 'oscuro')
+ * LIMITES: rangos mínimos y máximos permitidos para cada parámetro tipográfico numérico
+ * PREDETERMINADAS: configuración inicial retornada si el usuario aún no tiene registro en BD
+ */
 const FUENTES = [
   'Botones',
   // Pensadas para accesibilidad
@@ -24,7 +53,6 @@ const FUENTES = [
 
 const CONTRASTES = ['claro', 'oscuro'];
 
-// Límites de los campos numéricos (mismos que en el frontend)
 const LIMITES = {
   tamanio_fuente:   { nombre: 'El tamaño de fuente',          min: 8, max: 120 }, // px
   interlineado:     { nombre: 'El interlineado',              min: 1, max: 5 },   // multiplicador
@@ -42,7 +70,13 @@ const PREDETERMINADAS = {
   fecha_actualizacion: null
 };
 
-// Convierte "1,5" o "1.5" o 1.5 en número. Si no es un número válido devuelve NaN.
+/**
+ * Función auxiliar que convierte una entrada numérica o de texto en número flotante válido
+ * 
+ * Acepta formatos como `"1,5"`, `"1.5"` o `1.5`. Rechaza infinitos, texto no numérico o espacios
+ * @param {string|number} valor - Dato recibido en el cuerpo de la petición
+ * @returns {number} Número válido o `NaN` si el formato es inválido
+ */
 function aNumero(valor) {
   if (typeof valor === 'number') return Number.isFinite(valor) ? valor : NaN;
   if (typeof valor !== 'string') return NaN;
@@ -50,7 +84,14 @@ function aNumero(valor) {
   return /^\d+(\.\d+)?$/.test(texto) ? parseFloat(texto) : NaN;
 }
 
-// Valida el body. Devuelve { errores, datos } (datos ya con números limpios)
+/**
+ * Función que valida todos los campos de preferencias recibidos en el cuerpo HTTP
+ * 
+ * Comprueba que fuente y contraste pertenezcan a las listas permitidas y que cada
+ * valor numérico esté dentro de sus límites, redondeándolo a 2 decimales (`DECIMAL(10,2)`)
+ * @param {Object} body - Cuerpo JSON enviado por el cliente
+ * @returns {{errores: Array<string>, datos: Object}} Lista de errores encontrados y objeto limpio
+ */
 function validar(body) {
   const errores = [];
   const datos = {};
@@ -75,7 +116,12 @@ function validar(body) {
   return { errores, datos };
 }
 
-// MySQL devuelve los DECIMAL como texto ("16.00"): los pasamos a número
+/**
+ * Función auxiliar que normaliza una fila de MySQL convirtiendo columnas DECIMAL de texto a Number
+ * 
+ * @param {Object} fila - Registro crudo devuelto por la consulta SQL
+ * @returns {Object} Objeto de preferencias con tipos numéricos nativos
+ */
 function formatear(fila) {
   return {
     fuente: fila.fuente,
@@ -88,7 +134,15 @@ function formatear(fila) {
   };
 }
 
-// Función reutilizable (también la usa /api/login). Si no hay registro, devuelve las predeterminadas.
+/**
+ * Función reutilizable que consulta las preferencias más recientes de un usuario
+ * 
+ * Utilizada tanto por `GET /api/preferencias` como por `POST /api/login`. Si el usuario
+ * nunca ha guardado preferencias, retorna una copia de `PREDETERMINADAS`
+ * @async
+ * @param {number|string} idUsuario - Identificador del usuario en la base de datos
+ * @returns {Promise<Object>} Objeto con las preferencias del usuario o las predeterminadas
+ */
 async function obtenerPreferenciasUsuario(idUsuario) {
   const [filas] = await pool.query(
     `SELECT fuente, tamanio_fuente, interlineado, espacio_letras, espacio_palabras,
@@ -101,7 +155,14 @@ async function obtenerPreferenciasUsuario(idUsuario) {
   return filas.length ? formatear(filas[0]) : { ...PREDETERMINADAS };
 }
 
-// GET /api/preferencias
+/**
+ * Controlador GET /api/preferencias - Devuelve las preferencias del usuario autenticado
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `req.usuario.id`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Objeto JSON con las preferencias visuales
+ */
 async function obtenerPreferencias(req, res) {
   try {
     const preferencias = await obtenerPreferenciasUsuario(req.usuario.id);
@@ -112,7 +173,16 @@ async function obtenerPreferencias(req, res) {
   }
 }
 
-// PUT /api/preferencias  (crea o actualiza)
+/**
+ * Controlador PUT /api/preferencias - Crea o actualiza las preferencias del usuario
+ * 
+ * Valida los datos recibidos, intenta actualizar la fila existente del usuario y,
+ * si aún no tiene registro, lo inserta de forma segura evitando duplicados
+ * @async
+ * @param {import('express').Request} req - Petición Express con los campos visuales en `req.body`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Confirmación JSON junto con las preferencias actualizadas
+ */
 async function guardarPreferencias(req, res) {
   const { errores, datos } = validar(req.body || {});
   if (errores.length) {

@@ -1,11 +1,38 @@
 /**
- * Controlador de procesamiento de texto y extracción desde URL externa
+ * ============================================================================
+ * textoController.js - Controlador de procesamiento de texto y extracción web en AdaptiWeb
+ * ============================================================================
  *
- * Procesa texto directo ingresado por el usuario o extrae el contenido textual
- * limpio de una URL descartando elementos superfluos (menús, publicidad, scripts, etc.).
+ * ¿Qué hace?
+ *   1. Procesa y normaliza texto plano ingresado manualmente por el usuario (`tipo: 'texto'`),
+ *      eliminando espacios redundantes, tabulaciones y saltos de línea excesivos.
+ *   2. Extrae el contenido textual limpio de una página web externa (`tipo: 'url'`):
+ *      - Valida el formato y protocolo seguro (`http:` o `https:`) de la URL.
+ *      - Realiza la petición HTTP con un límite de espera (`AbortController` de 12 segundos).
+ *      - Verifica que el tipo de contenido (`Content-Type`) sea HTML o texto plano (rechazando PDFs directos).
+ *      - Prioriza etiquetas semánticas principales (`<main>`, `<article>`) y descarta ruido
+ *        visual (scripts, estilos, menús, publicidad, cookies, banners, formularios).
+ *      - Decodifica entidades HTML nombradas, decimales y hexadecimales a caracteres legibles.
+ *
+ * Dependencias:
+ *   - Fetch API & AbortController (nativos de Node.js) -> descarga y control de timeout de URLs externas.
+ *
+ * Endpoints expuestos:
+ *   - POST /api/texto/procesar -> recibe `{ tipo: 'texto' | 'url', valor: string }`.
+ *
+ * @version 1.0.0
+ * @author Elkin Alzate Londoño
  */
 
-
+/**
+ * Función auxiliar que normaliza espacios, tabulaciones y saltos de línea de un texto plano
+ * 
+ * Convierte saltos CRLF a LF, reemplaza tabuladores por espacios, colapsa múltiples
+ * espacios consecutivos y limita los saltos de línea a un máximo de dos seguidos
+ * 
+ * @param {string} texto - Cadena de texto sin procesar
+ * @returns {string} Texto limpio y estructurado listo para lectura accesible
+ */
 function limpiarTextoPlano(texto) {
   return String(texto || '')
     .replace(/\r\n/g, '\n')
@@ -16,6 +43,15 @@ function limpiarTextoPlano(texto) {
     .trim();
 }
 
+/**
+ * Función auxiliar que convierte entidades HTML a sus caracteres Unicode correspondientes
+ * 
+ * Soporta entidades numéricas decimales (`&#123;`), hexadecimales (`&#x1A;`) y
+ * entidades nombradas comunes en español y tipografía (`&aacute;`, `&ntilde;`, `&mdash;`, etc.)
+ * 
+ * @param {string} texto - Cadena con posibles entidades HTML codificadas
+ * @returns {string} Cadena con los caracteres decodificados
+ */
 function decodificarEntidadesHtml(texto) {
   const mapa = {
     '&nbsp;': ' ',
@@ -47,6 +83,19 @@ function decodificarEntidadesHtml(texto) {
     .replace(/&[a-zA-Z0-9#]+;/g, (entidad) => (entidad in mapa ? mapa[entidad] : entidad));
 }
 
+/**
+ * Función que extrae el contenido textual principal a partir de un documento HTML crudo
+ * 
+ * Aplica un pipeline de 5 etapas:
+ *   1. Focaliza `<main>` o `<article>` (si tienen suficiente contenido) o recurre a `<body>`.
+ *   2. Elimina comentarios y etiquetas no textuales (`script`, `style`, `nav`, `footer`, `aside`, `form`, etc.).
+ *   3. Filtra bloques identificados por atributos `class`, `id` o `role` como publicidad, cookies, menús o comentarios.
+ *   4. Preserva la estructura de párrafos, títulos y listas convirtiendo cierres de bloque en saltos de línea.
+ *   5. Elimina las etiquetas HTML residuales, decodifica entidades y limpia espacios.
+ * 
+ * @param {string} html - Código fuente HTML completo de la página descargada
+ * @returns {string} Texto limpio extraído de la página web
+ */
 function extraerTextoLimpioDesdeHtml(html) {
   let limpio = String(html || '');
 
@@ -85,7 +134,19 @@ function extraerTextoLimpioDesdeHtml(html) {
   return limpiarTextoPlano(limpio);
 }
 
-// POST /api/texto/procesar
+/**
+ * Controlador POST /api/texto/procesar - Procesa texto directo o extrae texto desde una URL
+ * 
+ * Evalúa el campo `tipo` del cuerpo JSON:
+ *   - `'texto'`: limpia y devuelve directamente la cadena recibida en `valor`.
+ *   - `'url'`: valida la dirección web, la descarga con timeout de 12 segundos, valida
+ *     su cabecera `Content-Type` y extrae el texto legible del documento.
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `{ tipo: 'texto'|'url', valor: string }`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Objeto JSON `{ texto: string }` o mensaje de error HTTP
+ */
 async function procesarContenido(req, res) {
   const { tipo, valor } = req.body || {};
 

@@ -1,26 +1,55 @@
 /**
- * Controlador de tareas
+ * ============================================================================
+ * taskController.js - Controlador de gestión de tareas y recordatorios en AdaptiWeb
+ * ============================================================================
  *
- * Tabla Tareas: id_tarea, id_usuario, titulo, descripcion, fecha_tarea (fecha/hora de finalización),
- * recordatorio, recordatorio_notificado, estado ('Sin Terminar' | 'Terminada'), fecha_creacion.
+ * ¿Qué hace?
+ *   1. Gestiona el ciclo de vida completo de las tareas de cada usuario autenticado:
+ *      listar, crear, marcar como completada/pendiente, programar/eliminar recordatorios,
+ *      marcar avisos entregados y eliminar tareas finalizadas.
+ *   2. Garantiza el aislamiento de datos extrayendo el ID de usuario siempre desde el
+ *      token JWT (`req.usuario.id`) y nunca desde el cuerpo de la petición.
+ *   3. Maneja las fechas y horas como "hora de reloj" sin desplazamiento por zona horaria
+ *      mediante validación estricta (`normalizarFecha`) y formateo directo en SQL (`DATE_FORMAT`).
+ *   4. Aplica reglas de negocio: impide programar recordatorios en tareas ya finalizadas
+ *      y restringe la eliminación únicamente a tareas que ya estén marcadas como terminadas.
  *
- * - El id del usuario SIEMPRE sale del token (req.usuario), nunca del body: cada usuario solo ve y toca sus tareas.
- * - Las fechas se manejan como "hora de reloj" (sin zona horaria): lo que el usuario escribe es lo que se guarda y
- *   lo que se devuelve (DATE_FORMAT), para que no se desplacen al pasar por el servidor.
+ * Dependencias:
+ *   - ../../db -> piscina de conexiones MySQL (`pool`).
+ *   - ../middleware/authMiddleware -> `verificarToken` para proteger las rutas.
+ *
+ * Tablas afectadas en la base de datos:
+ *   - Tareas (id_tarea, id_usuario, titulo, descripcion, fecha_tarea, recordatorio,
+ *     recordatorio_notificado, estado, fecha_creacion).
+ *
+ * @version 1.0.0
+ * @author Elkin Alzate Londoño
  */
 const pool = require('../../db');
 const verificarToken = require('../middleware/authMiddleware');
 
+/**
+ * Constantes de estados, longitudes máximas y proyección SQL
+ * 
+ * ESTADO_PENDIENTE / ESTADO_TERMINADA: valores exactos almacenados en la columna `estado`
+ * MAX_TITULO / MAX_DESCRIPCION: límites de caracteres sincronizados con el esquema VARCHAR de MySQL
+ * COLUMNAS: fragmento reutilizable de SELECT que formatea fechas en formato ISO local (`YYYY-MM-DDTHH:MM:SS`)
+ */
 const ESTADO_PENDIENTE = 'Sin Terminar';
 const ESTADO_TERMINADA = 'Terminada';
 const MAX_TITULO = 100;       // VARCHAR(100)
 const MAX_DESCRIPCION = 255;  // VARCHAR(255)
-
 const COLUMNAS = `id_tarea, titulo, descripcion,
   DATE_FORMAT(fecha_tarea, '%Y-%m-%dT%H:%i:%s') AS fecha_tarea,
   DATE_FORMAT(recordatorio, '%Y-%m-%dT%H:%i:%s') AS recordatorio,
   recordatorio_notificado, estado`;
 
+  /**
+ * Función auxiliar que transforma una fila cruda de MySQL al objeto JSON esperado por el frontend
+ * 
+ * @param {Object} fila - Registro obtenido de la tabla `Tareas`
+ * @returns {Object} Objeto normalizado con tipos booleanos nativos (`completada`, `recordatorio_notificado`)
+ */
 function formatear(fila) {
   return {
     id_tarea: fila.id_tarea,
@@ -33,7 +62,15 @@ function formatear(fila) {
   };
 }
 
-// Acepta "2026-11-21T15:30", "2026-11-21T15:30:00" o con espacio. Devuelve "YYYY-MM-DD HH:MM:SS" o null si no es válida.
+/**
+ * Función auxiliar que valida y normaliza cadenas de fecha/hora al formato DATETIME de MySQL
+ * 
+ * Acepta `"2026-11-21T15:30"`, `"2026-11-21T15:30:00"` o separadas por espacio. Comprueba mediante
+ * `Date.UTC` que la fecha exista realmente en el calendario (evita fechas como 31 de febrero)
+ * 
+ * @param {string} valor - Cadena de fecha/hora enviada por el cliente
+ * @returns {string|null} Fecha formateada `"YYYY-MM-DD HH:MM:SS"` o `null` si es inválida
+ */
 function normalizarFecha(valor) {
   if (typeof valor !== 'string') return null;
   const m = valor.trim().match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/);
@@ -48,11 +85,25 @@ function normalizarFecha(valor) {
   return valida ? `${a}-${mes}-${d} ${h}:${mi}:${s}` : null;
 }
 
+/**
+ * Función auxiliar que extrae y valida el parámetro numérico `:id` de la URL
+ * 
+ * @param {import('express').Request} req - Petición Express
+ * @returns {number|null} Entero positivo válido o `null` si no es un ID correcto
+ */
 function leerId(req) {
   const id = Number(req.params.id);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
+/**
+ * Función auxiliar que consulta una tarea específica verificando que pertenezca al usuario
+ * 
+ * @async
+ * @param {number} idTarea - Identificador de la tarea
+ * @param {number|string} idUsuario - Identificador del usuario propietario
+ * @returns {Promise<Object|null>} Objeto de la tarea formateada o `null` si no existe
+ */
 async function buscarTarea(idTarea, idUsuario) {
   const [filas] = await pool.query(
     `SELECT ${COLUMNAS} FROM Tareas WHERE id_tarea = ? AND id_usuario = ?`,
@@ -61,12 +112,30 @@ async function buscarTarea(idTarea, idUsuario) {
   return filas[0] ? formatear(filas[0]) : null; // ya formateada: incluye "completada"
 }
 
+/**
+ * Función auxiliar centralizada para registrar errores en consola y responder HTTP 500
+ * 
+ * @param {import('express').Response} res - Respuesta Express
+ * @param {string} accion - Descripción breve de la operación que falló
+ * @param {Error} error - Objeto de error capturado
+ * @returns {import('express').Response} Respuesta JSON con estado HTTP 500
+ */
 function errorInterno(res, accion, error) {
   console.error(`Error al ${accion}:`, error);
   return res.status(500).json({ message: 'Error interno del servidor.' });
 }
 
-// GET /api/tareas  -> pendientes primero, por fecha de finalización; las terminadas al final
+/**
+ * Controlador GET /api/tareas - Lista todas las tareas del usuario autenticado
+ * 
+ * Ordena colocando primero las tareas pendientes (`estado = 'Sin Terminar'`),
+ * luego por fecha de finalización más próxima y finalmente por ID ascendente
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `req.usuario.id`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Objeto JSON `{ tareas: Array<Object> }`
+ */
 async function listarTareas(req, res) {
   try {
     const [filas] = await pool.query(
@@ -81,8 +150,17 @@ async function listarTareas(req, res) {
   }
 }
 
-// GET /api/tareas/recordatorios/pendientes -> tareas sin terminar con recordatorio que aún no se ha avisado.
-// El navegador compara la hora con su reloj local (el servidor no conoce la zona horaria del usuario).
+/**
+ * Controlador GET /api/tareas/recordatorios/pendientes - Consulta recordatorios por notificar
+ * 
+ * Devuelve las tareas sin terminar que tienen un recordatorio configurado y aún no han sido
+ * notificadas (`recordatorio_notificado = 0`) para que el reloj del navegador las evalúe
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `req.usuario.id`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Objeto JSON `{ tareas: Array<Object> }`
+ */
 async function listarRecordatoriosPendientes(req, res) {
   try {
     const [filas] = await pool.query(
@@ -97,7 +175,17 @@ async function listarRecordatoriosPendientes(req, res) {
   }
 }
 
-// POST /api/tareas  { titulo, descripcion, fecha_tarea }
+/**
+ * Controlador POST /api/tareas - Crea una nueva tarea en estado 'Sin Terminar'
+ * 
+ * Valida obligatoriedad y longitud máxima de título/descripción, así como la validez
+ * de `fecha_tarea`, inserta el registro en BD y devuelve la tarea recién creada
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `{ titulo, descripcion, fecha_tarea }`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Confirmación y objeto de tarea creada (HTTP 201)
+ */
 async function crearTarea(req, res) {
   const titulo = typeof req.body?.titulo === 'string' ? req.body.titulo.trim() : '';
   const descripcion = typeof req.body?.descripcion === 'string' ? req.body.descripcion.trim() : '';
@@ -128,7 +216,17 @@ async function crearTarea(req, res) {
   }
 }
 
-// PATCH /api/tareas/:id/completar  { completada?: boolean }  (sin body: alterna el estado)
+/**
+ * Controlador PATCH /api/tareas/:id/completar - Cambia el estado de finalización de una tarea
+ * 
+ * Si se recibe `completada` (booleano) en el cuerpo, fija ese estado; de lo contrario,
+ * invierte el estado actual entre `'Sin Terminar'` y `'Terminada'`
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `req.params.id` y `req.body.completada`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Mensaje de estado y objeto `tarea` actualizado
+ */
 async function alternarCompletada(req, res) {
   const idTarea = leerId(req);
   if (!idTarea) return res.status(400).json({ message: 'ID de tarea inválido.' });
@@ -153,7 +251,17 @@ async function alternarCompletada(req, res) {
   }
 }
 
-// PATCH /api/tareas/:id/recordatorio  { recordatorio: "YYYY-MM-DDTHH:MM" | null }
+/**
+ * Controlador PATCH /api/tareas/:id/recordatorio - Programa o elimina el recordatorio de una tarea
+ * 
+ * Impide modificar recordatorios en tareas ya finalizadas (HTTP 409) y reinicia
+ * la bandera `recordatorio_notificado = 0` cada vez que se establece una nueva fecha
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `req.params.id` y `req.body.recordatorio`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Confirmación y objeto `tarea` actualizado
+ */
 async function actualizarRecordatorio(req, res) {
   const idTarea = leerId(req);
   if (!idTarea) return res.status(400).json({ message: 'ID de tarea inválido.' });
@@ -187,7 +295,17 @@ async function actualizarRecordatorio(req, res) {
   }
 }
 
-// PATCH /api/tareas/:id/recordatorio-notificado  (el navegador ya mostró el aviso)
+/**
+ * Controlador PATCH /api/tareas/:id/recordatorio-notificado - Confirma que el aviso fue mostrado
+ * 
+ * Invocado por el frontend inmediatamente después de disparar la notificación al usuario,
+ * evitando que el aviso vuelva a repetirse en futuras consultas o dispositivos
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `req.params.id`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Confirmación JSON con `id_tarea`
+ */
 async function marcarRecordatorioNotificado(req, res) {
   const idTarea = leerId(req);
   if (!idTarea) return res.status(400).json({ message: 'ID de tarea inválido.' });
@@ -204,7 +322,17 @@ async function marcarRecordatorioNotificado(req, res) {
   }
 }
 
-// DELETE /api/tareas/:id  (solo tareas ya finalizadas)
+/**
+ * Controlador DELETE /api/tareas/:id - Elimina permanentemente una tarea finalizada
+ * 
+ * Valida que la tarea exista, pertenezca al usuario y se encuentre en estado `'Terminada'`;
+ * si aún está pendiente, responde HTTP 409 Conflict
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `req.params.id`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Confirmación JSON con `id_tarea` eliminado
+ */
 async function eliminarTarea(req, res) {
   const idTarea = leerId(req);
   if (!idTarea) return res.status(400).json({ message: 'ID de tarea inválido.' });

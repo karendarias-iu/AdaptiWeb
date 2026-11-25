@@ -1,3 +1,26 @@
+/**
+ * ============================================================================
+ * resetPassword.js - Restablecimiento de contraseña en AdaptiWeb
+ * ============================================================================
+ *
+ * ¿Qué hace?
+ *   1. Extrae y valida el token de recuperación desde los parámetros de la URL (?token=...).
+ *   2. Bloquea el formulario si el enlace está incompleto o no contiene un token válido.
+ *   3. Permite alternar la visibilidad de los campos de contraseña (mostrar/ocultar).
+ *   4. Valida que la nueva contraseña tenga mínimo 8 caracteres y coincida con su confirmación.
+ *   5. Envía la solicitud de actualización al backend mediante POST /api/reset-password.
+ *   6. Muestra notificaciones flotantes de error o el panel de confirmación final con
+ *      acceso directo para volver a Inicio.html.
+ *
+ * Dependencias:
+ *   - Backend -> endpoint POST /api/reset-password.
+ *
+ * Datos que usa del navegador:
+ *   - URLSearchParams (window.location.search): lee el parámetro 'token' del enlace de correo.
+ *
+ * @version 1.0.0
+ * @author John Ever Arredondo Raigosa
+ */
 document.addEventListener('DOMContentLoaded', () => {
   /**
    * Elementos de la página
@@ -24,18 +47,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const botonGuardarPassword = document.getElementById('botonGuardarPassword');
   const botonVolverInicio = document.getElementById('botonVolverInicio');
   /**
-   * Variables
+   * Constantes y variables
    * 
-   * temporizadorError: tiempo en ms que maneja el tiempo en que se muestra el mensaje en el panelError
+   * temporizadorError: referencia al setTimeout que controla la duración del panel flotante de error
+   * params: objeto URLSearchParams con los parámetros de consulta de la URL actual
+   * token: token JWT de recuperación extraído del parámetro 'token' de la URL
    */
   let temporizadorError;
-
-  // Extraer el token almacenado en la URL
   const params = new URLSearchParams(window.location.search);
-  //extrae el token
   const token = params.get('token');
 
-  //Si no existe muestra el mensaje de error y bloquea el boton
+  // Verifica que exista un token en la URL
   if (!token) {
     mostrarError('Enlace inválido o incompleto. Solicita uno nuevo.', 6000);
     botonGuardarPassword.disabled = true;
@@ -63,8 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   /**
    * Formulario contraseña nueva
-   * 
-   * 
    */
   formularioNewPassword.addEventListener('submit', async (e) => {
     //evita que se recargue la página

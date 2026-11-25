@@ -1,13 +1,45 @@
 /**
- * Controlador de Marcadores por usuario
+ * ============================================================================
+ * marcadoresController.js - Controlador de marcadores y favoritos en AdaptiWeb
+ * ============================================================================
  *
- * Crea automáticamente la tabla Marcadores si no existe en MySQL y permite
- * listar, crear, marcar/desmarcar favorito y eliminar enlaces del usuario.
+ * ¿Qué hace?
+ *   1. Verifica y crea automáticamente la tabla `Marcadores` en MySQL si aún no existe,
+ *      además de migrar columnas antiguas (`favorito`, longitudes de `titulo` y `url`).
+ *   2. Consulta y lista los marcadores del usuario autenticado (`GET /api/marcadores`),
+ *      ordenando siempre los favoritos primero y luego los más recientes.
+ *   3. Valida y registra nuevos enlaces (`POST /api/marcadores`), asegurando que usen
+ *      protocolo HTTP o HTTPS y recortando las cadenas a la longitud máxima de la tabla.
+ *   4. Alterna el estado de favorito de un marcador específico (`PATCH /api/marcadores/:id/favorito`).
+ *   5. Elimina marcadores pertenecientes al usuario autenticado (`DELETE /api/marcadores/:id`).
+ *
+ * Dependencias:
+ *   - ../../db -> piscina de conexiones MySQL (`pool`).
+ *   - Middleware de autenticación -> inyecta `req.usuario.id` para aislar los datos por cuenta.
+ *
+ * Tablas afectadas en la base de datos:
+ *   - Marcadores (id_marcador, id_usuario, titulo, url, favorito, fecha_creacion).
+ *
+ * @version 1.0.0
+ * @author Elkin Alzate Londoño
  */
 const pool = require('../../db');
-
+/**
+ * Variables de estado del módulo
+ * 
+ * tablaVerificada: bandera booleana en memoria que evita ejecutar las consultas de
+ *   verificación/migración del esquema DDL en cada petición HTTP tras la primera comprobación
+ */
 let tablaVerificada = false;
-
+/**
+ * Función asíncrona que garantiza la existencia y estructura actualizada de la tabla `Marcadores`
+ * 
+ * Crea la tabla si no existe, inspecciona `information_schema.COLUMNS` para añadir la columna
+ * `favorito` en instalaciones antiguas y ajusta las longitudes máximas de `titulo` y `url`
+ * 
+ * @async
+ * @returns {Promise<void>}
+ */
 async function asegurarTablaMarcadores() {
   if (tablaVerificada) return;
   await pool.query(`
@@ -36,6 +68,12 @@ async function asegurarTablaMarcadores() {
   tablaVerificada = true;
 }
 
+/**
+ * Función auxiliar que transforma una fila cruda de MySQL al formato JSON esperado por el frontend
+ * 
+ * @param {{id_marcador: number, titulo: string, url: string, favorito: number}} fila - Registro de BD
+ * @returns {{id: number, titulo: string, url: string, favorito: boolean}} Objeto normalizado
+ */
 function formatearFila(fila) {
   return {
     id: fila.id_marcador,
@@ -45,7 +83,17 @@ function formatearFila(fila) {
   };
 }
 
-// GET /api/marcadores
+/**
+ * Controlador GET /api/marcadores - Lista todos los marcadores del usuario autenticado
+ * 
+ * Ordena los resultados colocando los favoritos en la parte superior (`favorito DESC`)
+ * y dentro de cada grupo del más reciente al más antiguo (`id_marcador DESC`)
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `req.usuario.id`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Arreglo JSON de marcadores del usuario
+ */
 async function listarMarcadores(req, res) {
   try {
     await asegurarTablaMarcadores();
@@ -63,7 +111,17 @@ async function listarMarcadores(req, res) {
   }
 }
 
-// POST /api/marcadores
+/**
+ * Controlador POST /api/marcadores - Crea y guarda un nuevo marcador para el usuario
+ * 
+ * Valida que el título y la URL existan, verifica con `new URL()` que el protocolo sea
+ * `http:` o `https:` y recorta los valores a los límites de la tabla antes de insertar
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `{ titulo, url, favorito }` en `req.body`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Objeto JSON del marcador recién creado (HTTP 201)
+ */
 async function crearMarcador(req, res) {
   const titulo = typeof req.body?.titulo === 'string' ? req.body.titulo.trim() : '';
   const url = typeof req.body?.url === 'string' ? req.body.url.trim() : '';
@@ -102,7 +160,17 @@ async function crearMarcador(req, res) {
   }
 }
 
-// PATCH /api/marcadores/:id/favorito
+/**
+ * Controlador PATCH /api/marcadores/:id/favorito - Actualiza el estado de favorito
+ * 
+ * Valida que `:id` sea un entero positivo y actualiza la fila únicamente si pertenece
+ * al usuario autenticado (`WHERE id_marcador = ? AND id_usuario = ?`)
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `req.params.id` y `req.body.favorito`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Objeto JSON `{ id, favorito }` actualizado
+ */
 async function actualizarFavorito(req, res) {
   const idMarcador = Number(req.params.id);
   const favorito = req.body?.favorito ? 1 : 0;
@@ -131,7 +199,17 @@ async function actualizarFavorito(req, res) {
   }
 }
 
-// DELETE /api/marcadores/:id
+/**
+ * Controlador DELETE /api/marcadores/:id - Elimina un marcador del usuario
+ * 
+ * Verifica que el ID sea un entero positivo y elimina el registro filtrando siempre
+ * por `id_usuario` para impedir que un usuario borre marcadores ajenos
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `req.params.id`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise<import('express').Response>} Mensaje JSON de confirmación
+ */
 async function eliminarMarcador(req, res) {
   const idMarcador = Number(req.params.id);
 

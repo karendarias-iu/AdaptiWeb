@@ -1,12 +1,55 @@
+
 /**
- * Importación de librerias
+ * ============================================================================
+ * server.js - Servidor principal y API REST de AdaptiWeb (Backend)
+ * ============================================================================
+ *
+ * ¿Qué hace?
+ *   1. Carga las variables de entorno privadas (.env) al iniciar el proceso.
+ *   2. Configura el servidor Express, el parseo de JSON y el servicio de archivos
+ *      estáticos del frontend (`public` y `/src`).
+ *   3. Monta los enrutadores modulares de la API (`/api/preferencias`, `/api/texto`,
+ *      `/api/marcadores`, `/api/tareas` y `/api/cuenta`).
+ *   4. Gestiona el registro de usuarios (`POST /api/register`) encriptando contraseñas
+ *      con `bcrypt`.
+ *   5. Procesa la síntesis de voz (`POST /api/tts`) conectándose con la API externa
+ *      de ElevenLabs y devolviendo el flujo de audio MP3.
+ *   6. Gestiona el flujo de recuperación de contraseña (`POST /api/forgot-password`
+ *      y `POST /api/reset-password`) mediante tokens temporales JWT y envío de correos
+ *      electrónicos con `nodemailer`.
+ *   7. Autentica el inicio de sesión (`POST /api/login`), genera el token de sesión
+ *      de 24 horas y adjunta las preferencias visuales iniciales del usuario.
+ *
+ * Dependencias:
+ *   - express, bcrypt, jsonwebtoken, nodemailer, dotenv
+ *   - ./db -> pool de conexiones a la base de datos MySQL.
+ *   - ./src/routes/* -> enrutadores modulares de cada recurso.
+ *   - ./src/controllers/preferenciasController -> obtención de preferencias en el login.
+ *   - API externa -> ElevenLabs Text-to-Speech (v1).
+ *
+ * Variables de entorno (.env):
+ *   - PORT, JWT_SECRET, EMAIL_USER, EMAIL_PASS,
+ *     ELEVENLABS_API_KEY, ELEVENLABS_VOICE_FEMENINA, ELEVENLABS_VOICE_MASCULINA.
+ *
+ * @version 1.0.0
+ * @author John Ever Arredondo Raigosa
+ */
+
+//lee el archivo (.env) y carga las variables privadas de la base de datos
+require('dotenv').config();
+
+/**
+ * Importación de librerías y módulos internos
  * 
- * express: es un framework que permite crear el servidor http, escuchar las peticiones y definir rutas
- * bcrypt: permite pasar las contraseñas a un hash seguro para guardarla en la base de datos
- * pool: importa la configuración del db.js, da acceso a la piscina de conexiones para realizar consultas sql en la base de datos
- * path: ayuda a construir y gestionar las rutas de los archivos del proyecto
- * jwt: ayuda a la generación del token para recuperar la contraseña
- * nodemailer: hace el envio de correo
+ * express: framework para crear el servidor HTTP, middlewares y rutas REST
+ * bcrypt: librería para encriptar (hashear) y comparar contraseñas de forma segura
+ * pool: piscina de conexiones MySQL importada desde db.js
+ * path: utilidad nativa de Node.js para construir rutas de archivos multiplataforma
+ * jwt: librería para firmar y verificar tokens JWT (sesión y recuperación de contraseña)
+ * nodemailer: cliente SMTP para el envío de correos electrónicos de recuperación
+ * preferenciasRoutes, textoRoutes, marcadoresRoutes, tareasRoutes, cuentaRoutes:
+ *   enrutadores modulares que agrupan los endpoints de cada funcionalidad
+ * obtenerPreferenciasUsuario: controlador que consulta los ajustes visuales del usuario al iniciar sesión
  */
 const express = require('express');
 const bcrypt = require('bcrypt');
@@ -18,19 +61,20 @@ const preferenciasRoutes = require('./src/routes/preferenciasRoutes');
 const textoRoutes = require('./src/routes/textoRoutes');
 const marcadoresRoutes = require('./src/routes/marcadoresRoutes');
 const tareasRoutes = require('./src/routes/taskRoutes');
+const cuentaRoutes = require('./src/routes/cuentaRoutes');
 const { obtenerPreferenciasUsuario } = require('./src/controllers/preferenciasController');
 
-//lee el archivo (.env) y carga las variables privadas de la base de datos
-require('dotenv').config();
-
-//crea el objeto donde se registra el middleware, las rutas API y las configuraciones del servidor
+/**
+ * Constantes de configuración del servidor y transporte de correo
+ * 
+ * app: instancia principal de la aplicación Express
+ * PORT: puerto de red en el que escucha el servidor (por defecto 3000)
+ * JWT_SECRET: clave secreta usada para firmar y validar los tokens JWT
+ * transporter: instancia configurada de Nodemailer usando el servicio Gmail
+ */
 const app = express();
-//define el puerto de red, por defecto el 3000
 const PORT = process.env.PORT || 3000;
-//llave secreta
 const JWT_SECRET = process.env.JWT_SECRET || 'clave_secreta_adaptiweb';
-
-//se configuran datos para enviar el correo desde una cuenta
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -39,27 +83,37 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-//activa el parser json (interpreta los datos enviados, pasandolos a un objeto javaScript accesible)
+/**
+ * Middlewares globales y archivos estáticos
+ * 
+ * express.json(): interpreta el cuerpo de las peticiones entrantes en formato JSON
+ * express.static(...): sirve los archivos HTML, CSS, JS y recursos gráficos del frontend
+ */
 app.use(express.json());
-
-//declara la carpeta frontend/public como estatica, para acceder a archivos y assets desde ahi
 app.use(express.static(path.join(__dirname, '../frontend/public')));
-
-//pone en servicio la carpeta src para acceder a la hoja de estilos (css) y a lo correspondiente de js
 app.use('/src', express.static(path.join(__dirname, '../frontend/src')));
 
-//Preferencias de accesibilidad (GET para consultar, PUT para guardar). Requieren token de sesión
+/**
+ * Montaje de rutas modulares de la API
+ * 
+ * /api/preferencias: consulta y guardado de preferencias visuales (requiere token)
+ * /api/texto: limpieza de texto manual y extracción de contenido desde URLs
+ * /api/marcadores: gestión CRUD de marcadores y favoritos del usuario
+ * /api/tareas: gestión CRUD de tareas y recordatorios programados
+ * /api/cuenta: administración y eliminación de la cuenta del usuario
+ */
 app.use('/api/preferencias', preferenciasRoutes);
-
-//Procesamiento de texto directo y extracción limpia desde URL externa
 app.use('/api/texto', textoRoutes);
-
-//Marcadores personales del usuario
 app.use('/api/marcadores', marcadoresRoutes);
-
 app.use('/api/tareas', tareasRoutes);
+app.use('/api/cuenta', cuentaRoutes);
 
-//Registro de usuarios
+/**
+ * Endpoint POST /api/register - Registro de nuevos usuarios
+ * 
+ * Verifica que el correo no esté registrado previamente, genera un hash seguro
+ * de la contraseña con bcrypt (10 rondas de sal) e inserta el usuario en la BD
+ */
 app.post('/api/register', async (req, res) => {
   const { nombre, email, password } = req.body;
 
@@ -84,7 +138,13 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-//Text to speech
+/**
+ * Endpoint POST /api/tts - Síntesis de voz (Text-to-Speech)
+ * 
+ * Recibe un texto y el tipo de voz ('femenina' | 'masculina'), recorta el texto
+ * a un máximo de 2500 caracteres, consulta la API de ElevenLabs (modelo multilingüe v2)
+ * y retorna el archivo de audio binario en formato `audio/mpeg`
+ */
 app.post('/api/tts', async (req, res) => {
   const { texto, voz } = req.body;
 
@@ -140,8 +200,12 @@ app.post('/api/tts', async (req, res) => {
   }
 });
 
-
-//Post recuperación de contraseña
+/**
+ * Endpoint POST /api/forgot-password - Solicitud de recuperación de contraseña
+ * 
+ * Verifica que el correo exista, genera un token JWT temporal válido por 15 minutos,
+ * lo guarda en la columna `reset_token` del usuario y envía un correo HTML con el enlace
+ */
 app.post('/api/forgot-password', async (req, res) => {
   const { email } = req.body;
 
@@ -188,7 +252,13 @@ app.post('/api/forgot-password', async (req, res) => {
   }
 });
 
-// POST restablecer contraseña con token
+/**
+ * Endpoint POST /api/reset-password - Actualización de contraseña mediante token
+ * 
+ * Valida la nueva contraseña (mínimo 8 caracteres), verifica la firma y vigencia del JWT,
+ * comprueba que el token coincida con el almacenado en BD (un solo uso), actualiza
+ * el hash de la contraseña e invalida `reset_token` dejándolo en NULL
+ */
 app.post('/api/reset-password', async (req, res) => {
   const { token, newPassword } = req.body;
 
@@ -228,7 +298,13 @@ app.post('/api/reset-password', async (req, res) => {
   }
 });
 
-// POST iniciar sesión
+/**
+ * Endpoint POST /api/login - Inicio de sesión y generación de token
+ * 
+ * Verifica las credenciales contra la base de datos usando bcrypt.compare(),
+ * firma un token JWT de sesión válido por 24 horas y retorna los datos básicos
+ * del usuario junto con sus preferencias visuales de accesibilidad
+ */
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -282,6 +358,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Inicializa el servidor HTTP en el puerto configurado
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
 
 module.exports = app;

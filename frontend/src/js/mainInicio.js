@@ -1,3 +1,29 @@
+/**
+ * ============================================================================
+ * inicio.js - Pantalla de autenticación y bienvenida de AdaptiWeb
+ * ============================================================================
+ *
+ * ¿Qué hace?
+ *   1. Controla la navegación visual entre las vistas de bienvenida, registro, inicio de sesión y recuperación de contraseña.
+ *   2. Permite alternar la visibilidad de los campos de contraseña (mostrar/ocultar).
+ *   3. Valida los formularios del cliente (campos vacíos, correos permitidos y longitud mínima de contraseña).
+ *   4. Comunicación con el backend mediante tres endpoints:
+ *        - POST /api/register        (creación de una cuenta nueva).
+ *        - POST /api/login           (autenticación y descarga de preferencias).
+ *        - POST /api/forgot-password (envío de correo para restablecer la contraseña).
+ *   5. Muestra notificaciones flotantes temporales de error o confirmación
+ *
+ * Dependencias:
+ *   - Backend -> /api/register, /api/login y /api/forgot-password.
+ *
+ * Datos que usa del navegador:
+ *   - localStorage   (persiste al cerrar): guarda token, datos del usuario y preferencias.
+ *   - sessionStorage (temporal por pestaña): lee la bandera 'adaptiweb_cuenta_eliminada'.
+ *
+ * @version 1.0.0
+ * @author John Ever Arredondo Raigosa
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
   /* Elementos de la pagina
    * 
@@ -368,5 +394,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function formatoNombre(texto) {
     const textoLimpio = texto.trim().toLowerCase();
     return textoLimpio.charAt(0).toUpperCase() + textoLimpio.slice(1);
+  }
+
+  // Si el usuario llega desde "Eliminar cuenta" (dashboard.js deja esta marca), se le confirma con el panel flotante
+  if (sessionStorage.getItem('adaptiweb_cuenta_eliminada')) {
+    sessionStorage.removeItem('adaptiweb_cuenta_eliminada');
+    mostrarInformacion('Su cuenta fue eliminada exitosamente', 5000);
   }
 });

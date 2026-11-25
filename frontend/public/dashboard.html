@@ -31,9 +31,21 @@
         <a href="preferencias.html" id="nav-prefs" class="opcionMenu" style="--i:3">Preferencias</a>
         <a href="#" id="nav-logout" class="opcionMenu" style="--i:4">Cerrar sesión</a>
       </nav>
+      <button type="button" id="nav-delete-account" class="opcionMenu opcionPeligro" style="--i:5">Eliminar cuenta</button>
     </div>
   </aside>
-
+   <!-- Ventana emergente: confirmar eliminación de la cuenta -->
+  <div id="modal-eliminar-cuenta" class="cuenta-overlay hidden" role="alertdialog" aria-modal="true" aria-labelledby="eliminar-titulo" aria-describedby="eliminar-texto">
+    <div class="cuenta-card">
+      <h2 id="eliminar-titulo" class="cuenta-titulo">¿Está seguro?</h2>
+      <p id="eliminar-texto" class="cuenta-texto">Se borrarán sus preferencias de usuario, las tareas y los marcadores que ya tenía para siempre, eso es... Mucho tiempo.</p>
+      <p id="eliminar-error" class="cuenta-error hidden" role="alert"></p>
+      <div class="cuenta-acciones">
+        <button type="button" id="btn-cancelar-eliminar" class="btn-regresar">Regresar</button>
+        <button type="button" id="btn-confirmar-eliminar" class="btn-eliminar-cuenta">Eliminar</button>
+      </div>
+    </div>
+  </div>
   <main class="main-container">
 
     <!-- Dashboard -->
