@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: src/routes/cuentaRoutes.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: src/routes/cuentaRoutes.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * ============================================================================
+ * cuentaRoutes.js - Enrutador de gestión de cuenta de usuario en AdaptiWeb
+ * ============================================================================
+ *
+ * ¿Qué hace?
+ *   1. Define los endpoints bajo el prefijo `/api/cuenta` montado en `server.js`.
+ *   2. Protege las rutas mediante el middleware `verificarToken` para exigir una sesión JWT activa.
+ *   3. Enruta la petición `DELETE /api/cuenta` hacia el controlador `eliminarCuenta`,
+ *      encargado de borrar la cuenta y todos los datos asociados al usuario.
+ *
+ * Dependencias:
+ *   - express -> creación del enrutador modular (`express.Router()`).
+ *   - ../middleware/authMiddleware -> `verificarToken` para validar la identidad del usuario.
+ *   - ../controllers/cuentaController -> `eliminarCuenta` para ejecutar la lógica de borrado.
+ *
+ * @version 1.0.0
+ * @author Elkin Alzate Londoño
+ */
+const express = require('express');
+const verificarToken = require('../middleware/authMiddleware');
+const { eliminarCuenta } = require('../controllers/cuentaController');
+
+/**
+ * Instancia del enrutador de Express para el recurso `/api/cuenta`
+ * @type {import('express').Router}
+ */
+const router = express.Router();
+
+/**
+ * DELETE /api/cuenta
+ * Elimina definitivamente la cuenta del usuario autenticado y todos sus registros asociados
+ */
+router.delete('/', verificarToken, eliminarCuenta);
+
+module.exports = router;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ESTADO_PENDIENTE">ESTADO_PENDIENTE</a></li><li><a href="global.html#FUENTES">FUENTES</a></li><li><a href="global.html#JWT_SECRET">JWT_SECRET</a></li><li><a href="global.html#TABLAS_DEL_USUARIO">TABLAS_DEL_USUARIO</a></li><li><a href="global.html#aNumero">aNumero</a></li><li><a href="global.html#actualizarFavorito">actualizarFavorito</a></li><li><a href="global.html#actualizarRecordatorio">actualizarRecordatorio</a></li><li><a href="global.html#alternarCompletada">alternarCompletada</a></li><li><a href="global.html#app">app</a></li><li><a href="global.html#asegurarTablaMarcadores">asegurarTablaMarcadores</a></li><li><a href="global.html#buscarTarea">buscarTarea</a></li><li><a href="global.html#crearMarcador">crearMarcador</a></li><li><a href="global.html#crearTarea">crearTarea</a></li><li><a href="global.html#decodificarEntidadesHtml">decodificarEntidadesHtml</a></li><li><a href="global.html#eliminarCuenta">eliminarCuenta</a></li><li><a href="global.html#eliminarMarcador">eliminarMarcador</a></li><li><a href="global.html#eliminarTarea">eliminarTarea</a></li><li><a href="global.html#errorInterno">errorInterno</a></li><li><a href="global.html#express">express</a></li><li><a href="global.html#extraerTextoLimpioDesdeHtml">extraerTextoLimpioDesdeHtml</a></li><li><a href="global.html#formatear">formatear</a></li><li><a href="global.html#formatearFila">formatearFila</a></li><li><a href="global.html#guardarPreferencias">guardarPreferencias</a></li><li><a href="global.html#jwt">jwt</a></li><li><a href="global.html#leerId">leerId</a></li><li><a href="global.html#limpiarTextoPlano">limpiarTextoPlano</a></li><li><a href="global.html#listarMarcadores">listarMarcadores</a></li><li><a href="global.html#listarRecordatoriosPendientes">listarRecordatoriosPendientes</a></li><li><a href="global.html#listarTareas">listarTareas</a></li><li><a href="global.html#marcarRecordatorioNotificado">marcarRecordatorioNotificado</a></li><li><a href="global.html#normalizarFecha">normalizarFecha</a></li><li><a href="global.html#obtenerPreferencias">obtenerPreferencias</a></li><li><a href="global.html#obtenerPreferenciasUsuario">obtenerPreferenciasUsuario</a></li><li><a href="global.html#pool">pool</a></li><li><a href="global.html#procesarContenido">procesarContenido</a></li><li><a href="global.html#router">router</a></li><li><a href="global.html#tablaVerificada">tablaVerificada</a></li><li><a href="global.html#validar">validar</a></li><li><a href="global.html#verificarToken">verificarToken</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Nov 25 2026 14:32:55 GMT-0500 (hora estándar de Colombia)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

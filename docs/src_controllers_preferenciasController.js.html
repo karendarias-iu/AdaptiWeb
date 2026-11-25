@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: src/controllers/preferenciasController.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: src/controllers/preferenciasController.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * ============================================================================
+ * preferenciasController.js - Controlador de preferencias de accesibilidad en AdaptiWeb
+ * ============================================================================
+ *
+ * ¿Qué hace?
+ *   1. Define la lista blanca de tipografías permitidas (`FUENTES`), los modos de
+ *      contraste válidos (`CONTRASTES`), los rangos numéricos (`LIMITES`) y los
+ *      valores iniciales por defecto (`PREDETERMINADAS`).
+ *   2. Valida y normaliza los datos enviados por el usuario (convirtiendo decimales
+ *      con coma o punto y redondeando a 2 cifras decimales para MySQL).
+ *   3. Consulta las preferencias visuales de un usuario (`GET /api/preferencias` y
+ *      función reutilizable `obtenerPreferenciasUsuario` usada también en el login).
+ *   4. Crea o actualiza las preferencias del usuario (`PUT /api/preferencias`)
+ *      garantizando una única fila por cuenta mediante UPDATE seguido de INSERT
+ *      con `ON DUPLICATE KEY UPDATE`.
+ *
+ * Dependencias:
+ *   - ../../db -> piscina de conexiones MySQL (`pool`).
+ *   - Middleware de autenticación -> inyecta `req.usuario.id` para identificar la cuenta.
+ *
+ * Tablas afectadas en la base de datos:
+ *   - Preferencias (id_preferencia, id_usuario, fuente, tamanio_fuente, interlineado,
+ *     espacio_letras, espacio_palabras, contraste, fecha_actualizacion).
+ *
+ * @version 1.0.0
+ * @author Elkin Alzate Londoño
+ */
+const pool = require('../../db');
+
+/**
+ * Constantes de validación y valores predeterminados
+ * 
+ * FUENTES: catálogo permitido de familias tipográficas (sincronizado con frontend/src/js/tema.js)
+ * CONTRASTES: esquemas visuales admitidos ('claro' u 'oscuro')
+ * LIMITES: rangos mínimos y máximos permitidos para cada parámetro tipográfico numérico
+ * PREDETERMINADAS: configuración inicial retornada si el usuario aún no tiene registro en BD
+ */
+const FUENTES = [
+  'Botones',
+  // Pensadas para accesibilidad
+  'Lexend', 'Atkinson Hyperlegible', 'OpenDyslexic', 'Comic Sans MS',
+  // Sans-serif
+  'Arial', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Calibri', 'Segoe UI', 'Helvetica',
+  'Century Gothic', 'Open Sans', 'Roboto', 'Lato', 'Nunito', 'Montserrat', 'Poppins',
+  'Source Sans 3', 'Noto Sans', 'Inter',
+  // Serif
+  'Georgia', 'Times New Roman', 'Cambria', 'Garamond', 'Palatino Linotype', 'Book Antiqua',
+  'Merriweather', 'Lora', 'Noto Serif',
+  // Monoespaciadas
+  'Courier New', 'Consolas', 'Lucida Console'
+];
+
+const CONTRASTES = ['claro', 'oscuro'];
+
+const LIMITES = {
+  tamanio_fuente:   { nombre: 'El tamaño de fuente',          min: 8, max: 120 }, // px
+  interlineado:     { nombre: 'El interlineado',              min: 1, max: 5 },   // multiplicador
+  espacio_letras:   { nombre: 'El espacio entre letras',      min: 0, max: 20 },  // px
+  espacio_palabras: { nombre: 'El espacio entre palabras',    min: 0, max: 50 }   // px
+};
+
+const PREDETERMINADAS = {
+  fuente: 'Botones',
+  tamanio_fuente: 16,
+  interlineado: 1.5,
+  espacio_letras: 0,
+  espacio_palabras: 0,
+  contraste: 'oscuro',
+  fecha_actualizacion: null
+};
+
+/**
+ * Función auxiliar que convierte una entrada numérica o de texto en número flotante válido
+ * 
+ * Acepta formatos como `"1,5"`, `"1.5"` o `1.5`. Rechaza infinitos, texto no numérico o espacios
+ * @param {string|number} valor - Dato recibido en el cuerpo de la petición
+ * @returns {number} Número válido o `NaN` si el formato es inválido
+ */
+function aNumero(valor) {
+  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : NaN;
+  if (typeof valor !== 'string') return NaN;
+  const texto = valor.trim().replace(',', '.');
+  return /^\d+(\.\d+)?$/.test(texto) ? parseFloat(texto) : NaN;
+}
+
+/**
+ * Función que valida todos los campos de preferencias recibidos en el cuerpo HTTP
+ * 
+ * Comprueba que fuente y contraste pertenezcan a las listas permitidas y que cada
+ * valor numérico esté dentro de sus límites, redondeándolo a 2 decimales (`DECIMAL(10,2)`)
+ * @param {Object} body - Cuerpo JSON enviado por el cliente
+ * @returns {{errores: Array&lt;string>, datos: Object}} Lista de errores encontrados y objeto limpio
+ */
+function validar(body) {
+  const errores = [];
+  const datos = {};
+
+  if (!FUENTES.includes(body.fuente)) errores.push('La fuente seleccionada no es válida.');
+  else datos.fuente = body.fuente;
+
+  if (!CONTRASTES.includes(body.contraste)) errores.push('El contraste seleccionado no es válido.');
+  else datos.contraste = body.contraste;
+
+  for (const [campo, { nombre, min, max }] of Object.entries(LIMITES)) {
+    const numero = aNumero(body[campo]);
+    if (Number.isNaN(numero)) {
+      errores.push(`${nombre} debe ser un número.`);
+    } else if (numero &lt; min || numero > max) {
+      errores.push(`${nombre} debe estar entre ${min} y ${max}.`);
+    } else {
+      datos[campo] = Math.round(numero * 100) / 100; // 2 decimales, como DECIMAL(10,2)
+    }
+  }
+
+  return { errores, datos };
+}
+
+/**
+ * Función auxiliar que normaliza una fila de MySQL convirtiendo columnas DECIMAL de texto a Number
+ * 
+ * @param {Object} fila - Registro crudo devuelto por la consulta SQL
+ * @returns {Object} Objeto de preferencias con tipos numéricos nativos
+ */
+function formatear(fila) {
+  return {
+    fuente: fila.fuente,
+    tamanio_fuente: Number(fila.tamanio_fuente),
+    interlineado: Number(fila.interlineado),
+    espacio_letras: Number(fila.espacio_letras),
+    espacio_palabras: Number(fila.espacio_palabras),
+    contraste: fila.contraste,
+    fecha_actualizacion: fila.fecha_actualizacion
+  };
+}
+
+/**
+ * Función reutilizable que consulta las preferencias más recientes de un usuario
+ * 
+ * Utilizada tanto por `GET /api/preferencias` como por `POST /api/login`. Si el usuario
+ * nunca ha guardado preferencias, retorna una copia de `PREDETERMINADAS`
+ * @async
+ * @param {number|string} idUsuario - Identificador del usuario en la base de datos
+ * @returns {Promise&lt;Object>} Objeto con las preferencias del usuario o las predeterminadas
+ */
+async function obtenerPreferenciasUsuario(idUsuario) {
+  const [filas] = await pool.query(
+    `SELECT fuente, tamanio_fuente, interlineado, espacio_letras, espacio_palabras,
+            contraste, fecha_actualizacion
+       FROM Preferencias WHERE id_usuario = ?
+      ORDER BY fecha_actualizacion DESC, id_preferencia DESC
+      LIMIT 1`,
+    [idUsuario]
+  );
+  return filas.length ? formatear(filas[0]) : { ...PREDETERMINADAS };
+}
+
+/**
+ * Controlador GET /api/preferencias - Devuelve las preferencias del usuario autenticado
+ * 
+ * @async
+ * @param {import('express').Request} req - Petición Express con `req.usuario.id`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise&lt;import('express').Response>} Objeto JSON con las preferencias visuales
+ */
+async function obtenerPreferencias(req, res) {
+  try {
+    const preferencias = await obtenerPreferenciasUsuario(req.usuario.id);
+    return res.status(200).json(preferencias);
+  } catch (error) {
+    console.error('Error al obtener preferencias:', error);
+    return res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+}
+
+/**
+ * Controlador PUT /api/preferencias - Crea o actualiza las preferencias del usuario
+ * 
+ * Valida los datos recibidos, intenta actualizar la fila existente del usuario y,
+ * si aún no tiene registro, lo inserta de forma segura evitando duplicados
+ * @async
+ * @param {import('express').Request} req - Petición Express con los campos visuales en `req.body`
+ * @param {import('express').Response} res - Respuesta Express
+ * @returns {Promise&lt;import('express').Response>} Confirmación JSON junto con las preferencias actualizadas
+ */
+async function guardarPreferencias(req, res) {
+  const { errores, datos } = validar(req.body || {});
+  if (errores.length) {
+    return res.status(400).json({ message: errores.join(' '), errores });
+  }
+
+  try {
+    // Fecha y hora exactas en que se pulsó "Guardar" (momento en que llega la petición).
+    const ahora = new Date();
+
+    // 1) Si el usuario ya tiene preferencias, se actualizan (así nunca se duplican filas,
+    //    exista o no el índice único en id_usuario).
+    const [resultado] = await pool.query(
+      `UPDATE Preferencias
+          SET fuente = ?, tamanio_fuente = ?, interlineado = ?, espacio_letras = ?,
+              espacio_palabras = ?, contraste = ?, fecha_actualizacion = ?
+        WHERE id_usuario = ?`,
+      [
+        datos.fuente, datos.tamanio_fuente, datos.interlineado, datos.espacio_letras,
+        datos.espacio_palabras, datos.contraste, ahora, req.usuario.id
+      ]
+    );
+
+    // 2) Si no tenía ninguna fila, se crea la primera.
+    if (resultado.affectedRows === 0) {
+      await pool.query(
+        `INSERT INTO Preferencias
+           (id_usuario, fuente, tamanio_fuente, interlineado, espacio_letras,
+            espacio_palabras, contraste, fecha_actualizacion)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           fuente = VALUES(fuente),
+           tamanio_fuente = VALUES(tamanio_fuente),
+           interlineado = VALUES(interlineado),
+           espacio_letras = VALUES(espacio_letras),
+           espacio_palabras = VALUES(espacio_palabras),
+           contraste = VALUES(contraste),
+           fecha_actualizacion = VALUES(fecha_actualizacion)`,
+        [
+          req.usuario.id, datos.fuente, datos.tamanio_fuente, datos.interlineado,
+          datos.espacio_letras, datos.espacio_palabras, datos.contraste, ahora
+        ]
+      );
+    }
+
+    const preferencias = await obtenerPreferenciasUsuario(req.usuario.id);
+    return res.status(200).json({ message: 'Preferencias guardadas correctamente.', preferencias });
+  } catch (error) {
+    console.error('Error al guardar preferencias:', error);
+    return res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+}
+
+module.exports = {
+  obtenerPreferencias,
+  guardarPreferencias,
+  obtenerPreferenciasUsuario,
+  validar,
+  FUENTES
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ESTADO_PENDIENTE">ESTADO_PENDIENTE</a></li><li><a href="global.html#FUENTES">FUENTES</a></li><li><a href="global.html#JWT_SECRET">JWT_SECRET</a></li><li><a href="global.html#TABLAS_DEL_USUARIO">TABLAS_DEL_USUARIO</a></li><li><a href="global.html#aNumero">aNumero</a></li><li><a href="global.html#actualizarFavorito">actualizarFavorito</a></li><li><a href="global.html#actualizarRecordatorio">actualizarRecordatorio</a></li><li><a href="global.html#alternarCompletada">alternarCompletada</a></li><li><a href="global.html#app">app</a></li><li><a href="global.html#asegurarTablaMarcadores">asegurarTablaMarcadores</a></li><li><a href="global.html#buscarTarea">buscarTarea</a></li><li><a href="global.html#crearMarcador">crearMarcador</a></li><li><a href="global.html#crearTarea">crearTarea</a></li><li><a href="global.html#decodificarEntidadesHtml">decodificarEntidadesHtml</a></li><li><a href="global.html#eliminarCuenta">eliminarCuenta</a></li><li><a href="global.html#eliminarMarcador">eliminarMarcador</a></li><li><a href="global.html#eliminarTarea">eliminarTarea</a></li><li><a href="global.html#errorInterno">errorInterno</a></li><li><a href="global.html#express">express</a></li><li><a href="global.html#extraerTextoLimpioDesdeHtml">extraerTextoLimpioDesdeHtml</a></li><li><a href="global.html#formatear">formatear</a></li><li><a href="global.html#formatearFila">formatearFila</a></li><li><a href="global.html#guardarPreferencias">guardarPreferencias</a></li><li><a href="global.html#jwt">jwt</a></li><li><a href="global.html#leerId">leerId</a></li><li><a href="global.html#limpiarTextoPlano">limpiarTextoPlano</a></li><li><a href="global.html#listarMarcadores">listarMarcadores</a></li><li><a href="global.html#listarRecordatoriosPendientes">listarRecordatoriosPendientes</a></li><li><a href="global.html#listarTareas">listarTareas</a></li><li><a href="global.html#marcarRecordatorioNotificado">marcarRecordatorioNotificado</a></li><li><a href="global.html#normalizarFecha">normalizarFecha</a></li><li><a href="global.html#obtenerPreferencias">obtenerPreferencias</a></li><li><a href="global.html#obtenerPreferenciasUsuario">obtenerPreferenciasUsuario</a></li><li><a href="global.html#pool">pool</a></li><li><a href="global.html#procesarContenido">procesarContenido</a></li><li><a href="global.html#router">router</a></li><li><a href="global.html#tablaVerificada">tablaVerificada</a></li><li><a href="global.html#validar">validar</a></li><li><a href="global.html#verificarToken">verificarToken</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Nov 25 2026 14:32:55 GMT-0500 (hora estándar de Colombia)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

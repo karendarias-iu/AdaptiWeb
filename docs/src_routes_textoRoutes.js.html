@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: src/routes/textoRoutes.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: src/routes/textoRoutes.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * ============================================================================
+ * textoRoutes.js - Enrutador de procesamiento de texto y extracción web en AdaptiWeb
+ * ============================================================================
+ *
+ * ¿Qué hace?
+ *   1. Define los endpoints bajo el prefijo `/api/texto` montado en `server.js`.
+ *   2. Protege las peticiones mediante el middleware local `verificarToken`, que valida
+ *      el token JWT en la cabecera `Authorization: Bearer &lt;token>` e inyecta `req.usuario`.
+ *   3. Enruta la petición `POST /api/texto/procesar` hacia el controlador `procesarContenido`,
+ *      encargado de normalizar texto plano o extraer el contenido limpio de una URL externa.
+ *
+ * Dependencias:
+ *   - express -> creación del enrutador modular (`express.Router()`).
+ *   - jsonwebtoken -> verificación de firma y vigencia del token JWT de sesión.
+ *   - ../controllers/textoController -> `procesarContenido` para limpieza de texto y scraping HTML.
+ *
+ * Variables de entorno (.env):
+ *   - JWT_SECRET: clave secreta compartida para verificar los tokens JWT.
+ *
+ * @version 1.0.0
+ * @author John Ever Arredondo Raigosa
+ */
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const { procesarContenido } = require('../controllers/textoController');
+
+/**
+ * Constantes de configuración del enrutador
+ * 
+ * router: instancia del enrutador de Express para el recurso `/api/texto`
+ * JWT_SECRET: llave secreta cargada desde variables de entorno (o valor de respaldo local)
+ */
+const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'clave_secreta_adaptiweb';
+
+/**
+ * Middleware local que verifica la validez del token JWT antes de procesar contenido
+ * 
+ * Extrae el token del encabezado `Authorization: Bearer &lt;token>`, lo decodifica con `jwt.verify`
+ * y adjunta el payload en `req.usuario`
+ * 
+ * @param {import('express').Request} req - Objeto de petición HTTP Express
+ * @param {import('express').Response} res - Objeto de respuesta HTTP Express
+ * @param {import('express').NextFunction} next - Función para continuar al controlador
+ * @returns {import('express').Response|void} Respuesta HTTP 401 si no hay token o expiró, o llama a `next()`
+ */
+function verificarToken(req, res, next) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ message: 'Token de sesión requerido.' });
+  }
+
+  try {
+    req.usuario = jwt.verify(token, JWT_SECRET);
+    return next();
+  } catch {
+    return res.status(401).json({ message: 'Sesión expirada o inválida.' });
+  }
+}
+
+/**
+ * POST /api/texto/procesar
+ * Procesa texto directo ingresado por el usuario o extrae texto legible desde una URL externa
+ */
+router.post('/procesar', verificarToken, procesarContenido);
+
+module.exports = router;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ESTADO_PENDIENTE">ESTADO_PENDIENTE</a></li><li><a href="global.html#FUENTES">FUENTES</a></li><li><a href="global.html#JWT_SECRET">JWT_SECRET</a></li><li><a href="global.html#TABLAS_DEL_USUARIO">TABLAS_DEL_USUARIO</a></li><li><a href="global.html#aNumero">aNumero</a></li><li><a href="global.html#actualizarFavorito">actualizarFavorito</a></li><li><a href="global.html#actualizarRecordatorio">actualizarRecordatorio</a></li><li><a href="global.html#alternarCompletada">alternarCompletada</a></li><li><a href="global.html#app">app</a></li><li><a href="global.html#asegurarTablaMarcadores">asegurarTablaMarcadores</a></li><li><a href="global.html#buscarTarea">buscarTarea</a></li><li><a href="global.html#crearMarcador">crearMarcador</a></li><li><a href="global.html#crearTarea">crearTarea</a></li><li><a href="global.html#decodificarEntidadesHtml">decodificarEntidadesHtml</a></li><li><a href="global.html#eliminarCuenta">eliminarCuenta</a></li><li><a href="global.html#eliminarMarcador">eliminarMarcador</a></li><li><a href="global.html#eliminarTarea">eliminarTarea</a></li><li><a href="global.html#errorInterno">errorInterno</a></li><li><a href="global.html#express">express</a></li><li><a href="global.html#extraerTextoLimpioDesdeHtml">extraerTextoLimpioDesdeHtml</a></li><li><a href="global.html#formatear">formatear</a></li><li><a href="global.html#formatearFila">formatearFila</a></li><li><a href="global.html#guardarPreferencias">guardarPreferencias</a></li><li><a href="global.html#jwt">jwt</a></li><li><a href="global.html#leerId">leerId</a></li><li><a href="global.html#limpiarTextoPlano">limpiarTextoPlano</a></li><li><a href="global.html#listarMarcadores">listarMarcadores</a></li><li><a href="global.html#listarRecordatoriosPendientes">listarRecordatoriosPendientes</a></li><li><a href="global.html#listarTareas">listarTareas</a></li><li><a href="global.html#marcarRecordatorioNotificado">marcarRecordatorioNotificado</a></li><li><a href="global.html#normalizarFecha">normalizarFecha</a></li><li><a href="global.html#obtenerPreferencias">obtenerPreferencias</a></li><li><a href="global.html#obtenerPreferenciasUsuario">obtenerPreferenciasUsuario</a></li><li><a href="global.html#pool">pool</a></li><li><a href="global.html#procesarContenido">procesarContenido</a></li><li><a href="global.html#router">router</a></li><li><a href="global.html#tablaVerificada">tablaVerificada</a></li><li><a href="global.html#validar">validar</a></li><li><a href="global.html#verificarToken">verificarToken</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Wed Nov 25 2026 14:32:55 GMT-0500 (hora estándar de Colombia)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
